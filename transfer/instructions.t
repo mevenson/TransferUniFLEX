@@ -1,0 +1,1 @@
+to build the UniFLEX portion:first build socklib.t.r with relasmb socklib.tthen build getopt.r with cc getopt.c  +rNow you can build tuff with cc tuff.c socklib.t.r getopt.r +o=tuffand finally build transfer with cc transfer.c

@@ -492,7 +492,8 @@ namespace TransferUniFLEX
                                         // now get the original file time stamp from the selectedFileInfos for this file
                                         // using the filename as the key to the selectedFileInfos dictionary
 
-                                        FileInformation fileInfo = selectedFileInfos[filename];
+                                        string justTheFilename = Path.GetFileName(filename);
+                                        FileInformation fileInfo = selectedFileInfos[justTheFilename];
                                         remoteFileDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
 
                                         break;
