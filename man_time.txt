@@ -1,0 +1,39 @@
+time, ftime
+    get current time and date
+
+USAGE
+    long time(0)
+
+    long time(tp}
+    long *tp;
+
+    #include <timeb.h>
+    ftime(tbuf)
+    struct timeb *tbuf;
+
+ASSEMBLER EQUIVALENT
+    sys time, tbuf
+    NOTE: This is equivalent to 'ftime' only.
+
+DESCRIPTION
+    Time returns the long integer value of the system date and time and,
+if its argument is non-zero, places this value in the long integer
+pointed to by 'tp'.
+
+    Ftime gives more information by filling in a structure defined in
+    the header file1as follows:
+
+    /* 'ftime' structure */
+    struct timeb {
+        long time ; /* time in seconds */
+        char tm_tik ; /* ticks in second (tenths) */
+        int timezone ; /* time zone */
+        char dstflag ; /* daylight savings flag */
+    };
+
+'Timezone' is the number of minutes west of Greenwich.
+
+SEE ALSO
+    UniFLEX command date
+    Stadard Library function ctime
+    stime()
