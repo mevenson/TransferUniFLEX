@@ -1256,6 +1256,12 @@ namespace TransferUniFLEX
 
         private void frmTransfer_Load(object sender, EventArgs e)
         {
+            // we are going to set the width and height here because we want to allow
+            // a larger size in the designer for placing controls that get relocated
+            // when they need to be shown.
+
+            this.Size = new Size(525, 515);
+
             try
             {
                 registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\EvensonConsultingServices\TransferUniFLEX", true);

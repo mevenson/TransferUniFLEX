@@ -239,7 +239,7 @@ namespace TransferUniFLEX
             // checkBoxFixLineFeeds
             // 
             this.checkBoxFixLineFeeds.AutoSize = true;
-            this.checkBoxFixLineFeeds.Location = new System.Drawing.Point(7, 46);
+            this.checkBoxFixLineFeeds.Location = new System.Drawing.Point(6, 66);
             this.checkBoxFixLineFeeds.Name = "checkBoxFixLineFeeds";
             this.checkBoxFixLineFeeds.Size = new System.Drawing.Size(263, 17);
             this.checkBoxFixLineFeeds.TabIndex = 1;
@@ -273,7 +273,7 @@ namespace TransferUniFLEX
             this.toolStripStatusLabel});
             this.currentFileProgress.Location = new System.Drawing.Point(0, 454);
             this.currentFileProgress.Name = "currentFileProgress";
-            this.currentFileProgress.Size = new System.Drawing.Size(509, 22);
+            this.currentFileProgress.Size = new System.Drawing.Size(1050, 22);
             this.currentFileProgress.TabIndex = 15;
             // 
             // toolStripStatusLabel
@@ -369,9 +369,9 @@ namespace TransferUniFLEX
             this.labelResponses.AutoSize = true;
             this.labelResponses.Location = new System.Drawing.Point(19, 25);
             this.labelResponses.Name = "labelResponses";
-            this.labelResponses.Size = new System.Drawing.Size(57, 13);
+            this.labelResponses.Size = new System.Drawing.Size(63, 13);
             this.labelResponses.TabIndex = 0;
-            this.labelResponses.Text = "Resonses:";
+            this.labelResponses.Text = "Responses:";
             // 
             // textBoxResponses
             // 
@@ -384,6 +384,7 @@ namespace TransferUniFLEX
             this.textBoxResponses.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBoxResponses.Size = new System.Drawing.Size(376, 112);
             this.textBoxResponses.TabIndex = 2;
+            this.textBoxResponses.WordWrap = false;
             // 
             // groupBoxTCPIP
             // 
@@ -391,7 +392,7 @@ namespace TransferUniFLEX
             this.groupBoxTCPIP.Controls.Add(this.textBoxIPAddress);
             this.groupBoxTCPIP.Controls.Add(this.labelIPAddress);
             this.groupBoxTCPIP.Controls.Add(this.labelIPPort);
-            this.groupBoxTCPIP.Location = new System.Drawing.Point(203, 299);
+            this.groupBoxTCPIP.Location = new System.Drawing.Point(549, 30);
             this.groupBoxTCPIP.Name = "groupBoxTCPIP";
             this.groupBoxTCPIP.Size = new System.Drawing.Size(200, 72);
             this.groupBoxTCPIP.TabIndex = 16;
@@ -449,7 +450,7 @@ namespace TransferUniFLEX
             this.helpToolStripMenuItem});
             this.menuStripMain.Location = new System.Drawing.Point(0, 0);
             this.menuStripMain.Name = "menuStripMain";
-            this.menuStripMain.Size = new System.Drawing.Size(509, 24);
+            this.menuStripMain.Size = new System.Drawing.Size(1050, 24);
             this.menuStripMain.TabIndex = 22;
             this.menuStripMain.Text = "Menu Strip Main";
             // 
@@ -609,7 +610,7 @@ namespace TransferUniFLEX
             // checkBoxKeepZeroLengthFiles
             // 
             this.checkBoxKeepZeroLengthFiles.AutoSize = true;
-            this.checkBoxKeepZeroLengthFiles.Location = new System.Drawing.Point(7, 69);
+            this.checkBoxKeepZeroLengthFiles.Location = new System.Drawing.Point(7, 43);
             this.checkBoxKeepZeroLengthFiles.Name = "checkBoxKeepZeroLengthFiles";
             this.checkBoxKeepZeroLengthFiles.Size = new System.Drawing.Size(136, 17);
             this.checkBoxKeepZeroLengthFiles.TabIndex = 3;
@@ -642,7 +643,7 @@ namespace TransferUniFLEX
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(509, 476);
+            this.ClientSize = new System.Drawing.Size(1050, 476);
             this.Controls.Add(this.checkBoxAllowDirectorySelection);
             this.Controls.Add(this.groupBoxOptions);
             this.Controls.Add(this.groupBoxTCPIP);
