@@ -441,11 +441,13 @@ namespace TransferUniFLEX
                             {
                                 Application.DoEvents();
 
-                                Program.remoteAccess.socket.ReceiveTimeout = 3000;   // set receive timeout to 3 seconds - that should be suffcient
+                                Program.remoteAccess.socket.ReceiveTimeout = 1000;   // set receive timeout to 1 seconds - that should be suffcient
 
                                 int bytesReceived = 0;
                                 bool timeout = true;
-                                while (timeout)
+                                int retryCount = 5;         // allow 5 retry attempts on timeout
+
+                                while (timeout && retryCount > 0)
                                 {
                                     try
                                     {
@@ -457,6 +459,7 @@ namespace TransferUniFLEX
                                         if (ex.SocketErrorCode == SocketError.TimedOut)
                                         {
                                             timeout = true;
+                                            retryCount--;
                                         }
                                     }
                                 }
@@ -525,10 +528,17 @@ namespace TransferUniFLEX
                 }
 
                 // put remote file datetime on the copy
-
-                File.SetLastWriteTime(localFilename, remoteFileDateTime);
-                File.SetCreationTime(localFilename, remoteFileDateTime);
-                File.SetLastAccessTime(localFilename, remoteFileDateTime);
+                if (!error)
+                {
+                    File.SetLastWriteTime(localFilename, remoteFileDateTime);
+                    File.SetCreationTime(localFilename, remoteFileDateTime);
+                    File.SetLastAccessTime(localFilename, remoteFileDateTime);
+                }
+                else
+                {
+                    if (!checkBoxKeepZeroLengthFiles.Checked)
+                        File.Delete(localFilename);         // do not keep partial file
+                }
             }
 
             currentFileProgress.Items.Clear();
@@ -1316,6 +1326,12 @@ namespace TransferUniFLEX
                     checkBoxWarningsOff.Checked = true;
                 else
                     checkBoxWarningsOff.Checked = false;
+
+                string keepZeroLengthFiles = (string)registryKey.GetValue("keep Zero Length Files", "N");
+                if (keepZeroLengthFiles == "Y")
+                    checkBoxKeepZeroLengthFiles.Checked = true;
+                else
+                    checkBoxKeepZeroLengthFiles.Checked = false;
             }
 
             groupBoxTCPIP.Top  = groupBoxCOMPort.Top;
@@ -2058,6 +2074,11 @@ namespace TransferUniFLEX
         private void checkBoxWarningsOff_CheckedChanged(object sender, EventArgs e)
         {
             registryKey.SetValue("Warnings Off", checkBoxWarningsOff.Checked ? "Y" : "N");
+        }
+
+        private void checkBoxKeepZeroLengthFiles_CheckedChanged(object sender, EventArgs e)
+        {
+            registryKey.SetValue("Keep Zero Length Files", checkBoxKeepZeroLengthFiles.Checked ? "Y" : "N");
         }
 
         private void getABlockDevieToolStripMenuItem_Click(object sender, EventArgs e)

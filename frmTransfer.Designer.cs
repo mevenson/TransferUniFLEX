@@ -72,6 +72,8 @@ namespace TransferUniFLEX
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.getABlockDevieToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.forceRemoteExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBoxCOMPort = new System.Windows.Forms.GroupBox();
@@ -80,10 +82,9 @@ namespace TransferUniFLEX
             this.radioButtonCOMPort = new System.Windows.Forms.RadioButton();
             this.checkBoxWarningsOff = new System.Windows.Forms.CheckBox();
             this.groupBoxOptions = new System.Windows.Forms.GroupBox();
-            this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.forceRemoteExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkBoxKeepZeroLengthFiles = new System.Windows.Forms.CheckBox();
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
+            this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
             this.groupBoxDirection.SuspendLayout();
             this.currentFileProgress.SuspendLayout();
             this.groupBoxOperatorEntertainment.SuspendLayout();
@@ -144,7 +145,7 @@ namespace TransferUniFLEX
             // labelUniFLEXFileName
             // 
             this.labelUniFLEXFileName.AutoSize = true;
-            this.labelUniFLEXFileName.Location = new System.Drawing.Point(12, 211);
+            this.labelUniFLEXFileName.Location = new System.Drawing.Point(12, 231);
             this.labelUniFLEXFileName.Name = "labelUniFLEXFileName";
             this.labelUniFLEXFileName.Size = new System.Drawing.Size(99, 13);
             this.labelUniFLEXFileName.TabIndex = 6;
@@ -153,7 +154,7 @@ namespace TransferUniFLEX
             // labelLocalFileName
             // 
             this.labelLocalFileName.AutoSize = true;
-            this.labelLocalFileName.Location = new System.Drawing.Point(12, 235);
+            this.labelLocalFileName.Location = new System.Drawing.Point(12, 255);
             this.labelLocalFileName.Name = "labelLocalFileName";
             this.labelLocalFileName.Size = new System.Drawing.Size(83, 13);
             this.labelLocalFileName.TabIndex = 9;
@@ -161,7 +162,7 @@ namespace TransferUniFLEX
             // 
             // textBoxUniFLEXFileName
             // 
-            this.textBoxUniFLEXFileName.Location = new System.Drawing.Point(128, 207);
+            this.textBoxUniFLEXFileName.Location = new System.Drawing.Point(128, 227);
             this.textBoxUniFLEXFileName.Name = "textBoxUniFLEXFileName";
             this.textBoxUniFLEXFileName.Size = new System.Drawing.Size(291, 20);
             this.textBoxUniFLEXFileName.TabIndex = 7;
@@ -169,7 +170,7 @@ namespace TransferUniFLEX
             // 
             // textBoxLocalFileName
             // 
-            this.textBoxLocalFileName.Location = new System.Drawing.Point(128, 231);
+            this.textBoxLocalFileName.Location = new System.Drawing.Point(128, 251);
             this.textBoxLocalFileName.Name = "textBoxLocalFileName";
             this.textBoxLocalFileName.Size = new System.Drawing.Size(291, 20);
             this.textBoxLocalFileName.TabIndex = 10;
@@ -177,7 +178,7 @@ namespace TransferUniFLEX
             // 
             // buttonBrowseLocalFileName
             // 
-            this.buttonBrowseLocalFileName.Location = new System.Drawing.Point(425, 230);
+            this.buttonBrowseLocalFileName.Location = new System.Drawing.Point(425, 250);
             this.buttonBrowseLocalFileName.Name = "buttonBrowseLocalFileName";
             this.buttonBrowseLocalFileName.Size = new System.Drawing.Size(75, 23);
             this.buttonBrowseLocalFileName.TabIndex = 11;
@@ -210,7 +211,7 @@ namespace TransferUniFLEX
             // 
             // buttonBrowseLocalDirectory
             // 
-            this.buttonBrowseLocalDirectory.Location = new System.Drawing.Point(425, 254);
+            this.buttonBrowseLocalDirectory.Location = new System.Drawing.Point(425, 274);
             this.buttonBrowseLocalDirectory.Name = "buttonBrowseLocalDirectory";
             this.buttonBrowseLocalDirectory.Size = new System.Drawing.Size(75, 23);
             this.buttonBrowseLocalDirectory.TabIndex = 14;
@@ -220,7 +221,7 @@ namespace TransferUniFLEX
             // 
             // textBoxLocalDirName
             // 
-            this.textBoxLocalDirName.Location = new System.Drawing.Point(128, 255);
+            this.textBoxLocalDirName.Location = new System.Drawing.Point(128, 275);
             this.textBoxLocalDirName.Name = "textBoxLocalDirName";
             this.textBoxLocalDirName.Size = new System.Drawing.Size(291, 20);
             this.textBoxLocalDirName.TabIndex = 13;
@@ -229,7 +230,7 @@ namespace TransferUniFLEX
             // labelLocalDirName
             // 
             this.labelLocalDirName.AutoSize = true;
-            this.labelLocalDirName.Location = new System.Drawing.Point(12, 259);
+            this.labelLocalDirName.Location = new System.Drawing.Point(12, 279);
             this.labelLocalDirName.Name = "labelLocalDirName";
             this.labelLocalDirName.Size = new System.Drawing.Size(109, 13);
             this.labelLocalDirName.TabIndex = 12;
@@ -270,7 +271,7 @@ namespace TransferUniFLEX
             // 
             this.currentFileProgress.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel});
-            this.currentFileProgress.Location = new System.Drawing.Point(0, 435);
+            this.currentFileProgress.Location = new System.Drawing.Point(0, 454);
             this.currentFileProgress.Name = "currentFileProgress";
             this.currentFileProgress.Size = new System.Drawing.Size(509, 22);
             this.currentFileProgress.TabIndex = 15;
@@ -289,7 +290,7 @@ namespace TransferUniFLEX
             // 
             // buttonClearUniFLEXFilename
             // 
-            this.buttonClearUniFLEXFilename.Location = new System.Drawing.Point(425, 206);
+            this.buttonClearUniFLEXFilename.Location = new System.Drawing.Point(425, 226);
             this.buttonClearUniFLEXFilename.Name = "buttonClearUniFLEXFilename";
             this.buttonClearUniFLEXFilename.Size = new System.Drawing.Size(75, 23);
             this.buttonClearUniFLEXFilename.TabIndex = 8;
@@ -327,7 +328,7 @@ namespace TransferUniFLEX
             // checkBoxRecursive
             // 
             this.checkBoxRecursive.AutoSize = true;
-            this.checkBoxRecursive.Location = new System.Drawing.Point(12, 185);
+            this.checkBoxRecursive.Location = new System.Drawing.Point(12, 205);
             this.checkBoxRecursive.Name = "checkBoxRecursive";
             this.checkBoxRecursive.Size = new System.Drawing.Size(74, 17);
             this.checkBoxRecursive.TabIndex = 4;
@@ -337,7 +338,7 @@ namespace TransferUniFLEX
             // 
             // textBoxDirectoryReplaceString
             // 
-            this.textBoxDirectoryReplaceString.Location = new System.Drawing.Point(128, 183);
+            this.textBoxDirectoryReplaceString.Location = new System.Drawing.Point(128, 203);
             this.textBoxDirectoryReplaceString.Name = "textBoxDirectoryReplaceString";
             this.textBoxDirectoryReplaceString.Size = new System.Drawing.Size(291, 20);
             this.textBoxDirectoryReplaceString.TabIndex = 5;
@@ -347,7 +348,7 @@ namespace TransferUniFLEX
             this.groupBoxOperatorEntertainment.Controls.Add(this.buttonClearResponseWindow);
             this.groupBoxOperatorEntertainment.Controls.Add(this.labelResponses);
             this.groupBoxOperatorEntertainment.Controls.Add(this.textBoxResponses);
-            this.groupBoxOperatorEntertainment.Location = new System.Drawing.Point(12, 279);
+            this.groupBoxOperatorEntertainment.Location = new System.Drawing.Point(12, 299);
             this.groupBoxOperatorEntertainment.Name = "groupBoxOperatorEntertainment";
             this.groupBoxOperatorEntertainment.Size = new System.Drawing.Size(488, 149);
             this.groupBoxOperatorEntertainment.TabIndex = 15;
@@ -390,7 +391,7 @@ namespace TransferUniFLEX
             this.groupBoxTCPIP.Controls.Add(this.textBoxIPAddress);
             this.groupBoxTCPIP.Controls.Add(this.labelIPAddress);
             this.groupBoxTCPIP.Controls.Add(this.labelIPPort);
-            this.groupBoxTCPIP.Location = new System.Drawing.Point(203, 279);
+            this.groupBoxTCPIP.Location = new System.Drawing.Point(203, 299);
             this.groupBoxTCPIP.Name = "groupBoxTCPIP";
             this.groupBoxTCPIP.Size = new System.Drawing.Size(200, 72);
             this.groupBoxTCPIP.TabIndex = 16;
@@ -433,7 +434,7 @@ namespace TransferUniFLEX
             // 
             // buttonHelp
             // 
-            this.buttonHelp.Location = new System.Drawing.Point(425, 180);
+            this.buttonHelp.Location = new System.Drawing.Point(425, 200);
             this.buttonHelp.Name = "buttonHelp";
             this.buttonHelp.Size = new System.Drawing.Size(75, 23);
             this.buttonHelp.TabIndex = 20;
@@ -472,45 +473,57 @@ namespace TransferUniFLEX
             // startToolStripMenuItem
             // 
             this.startToolStripMenuItem.Name = "startToolStripMenuItem";
-            this.startToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.startToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.startToolStripMenuItem.Text = "&Start";
             this.startToolStripMenuItem.Click += new System.EventHandler(this.startToolStripMenuItem_Click);
             // 
             // pauseToolStripMenuItem
             // 
             this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
-            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.pauseToolStripMenuItem.Text = "&Pause";
             this.pauseToolStripMenuItem.Click += new System.EventHandler(this.pauseToolStripMenuItem_Click);
             // 
             // stopToolStripMenuItem
             // 
             this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
-            this.stopToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.stopToolStripMenuItem.Text = "S&top";
             this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(168, 6);
             // 
             // getABlockDevieToolStripMenuItem
             // 
             this.getABlockDevieToolStripMenuItem.Name = "getABlockDevieToolStripMenuItem";
-            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.getABlockDevieToolStripMenuItem.Text = "Get a Block Device";
             this.getABlockDevieToolStripMenuItem.Click += new System.EventHandler(this.getABlockDevieToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(168, 6);
+            // 
+            // forceRemoteExitToolStripMenuItem
+            // 
+            this.forceRemoteExitToolStripMenuItem.Name = "forceRemoteExitToolStripMenuItem";
+            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.forceRemoteExitToolStripMenuItem.Text = "&Force Remote Exit";
+            this.forceRemoteExitToolStripMenuItem.Click += new System.EventHandler(this.forceRemoteExitToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(168, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.exitToolStripMenuItem.Text = "&Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -582,38 +595,27 @@ namespace TransferUniFLEX
             // 
             // groupBoxOptions
             // 
+            this.groupBoxOptions.Controls.Add(this.checkBoxKeepZeroLengthFiles);
             this.groupBoxOptions.Controls.Add(this.buttonForceRemoteExit);
             this.groupBoxOptions.Controls.Add(this.checkBoxWarningsOff);
             this.groupBoxOptions.Controls.Add(this.checkBoxFixLineFeeds);
             this.groupBoxOptions.Location = new System.Drawing.Point(219, 105);
             this.groupBoxOptions.Name = "groupBoxOptions";
-            this.groupBoxOptions.Size = new System.Drawing.Size(279, 70);
+            this.groupBoxOptions.Size = new System.Drawing.Size(279, 89);
             this.groupBoxOptions.TabIndex = 3;
             this.groupBoxOptions.TabStop = false;
             this.groupBoxOptions.Text = "Options";
             // 
-            // checkBoxAllowDirectorySelection
+            // checkBoxKeepZeroLengthFiles
             // 
-            this.checkBoxAllowDirectorySelection.AutoSize = true;
-            this.checkBoxAllowDirectorySelection.Location = new System.Drawing.Point(92, 185);
-            this.checkBoxAllowDirectorySelection.Name = "checkBoxAllowDirectorySelection";
-            this.checkBoxAllowDirectorySelection.Size = new System.Drawing.Size(143, 17);
-            this.checkBoxAllowDirectorySelection.TabIndex = 23;
-            this.checkBoxAllowDirectorySelection.Text = "Allow Directory Selection";
-            this.checkBoxAllowDirectorySelection.UseVisualStyleBackColor = true;
-            this.checkBoxAllowDirectorySelection.Visible = false;
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(177, 6);
-            // 
-            // forceRemoteExitToolStripMenuItem
-            // 
-            this.forceRemoteExitToolStripMenuItem.Name = "forceRemoteExitToolStripMenuItem";
-            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.forceRemoteExitToolStripMenuItem.Text = "&Force Remote Exit";
-            this.forceRemoteExitToolStripMenuItem.Click += new System.EventHandler(this.forceRemoteExitToolStripMenuItem_Click);
+            this.checkBoxKeepZeroLengthFiles.AutoSize = true;
+            this.checkBoxKeepZeroLengthFiles.Location = new System.Drawing.Point(7, 69);
+            this.checkBoxKeepZeroLengthFiles.Name = "checkBoxKeepZeroLengthFiles";
+            this.checkBoxKeepZeroLengthFiles.Size = new System.Drawing.Size(136, 17);
+            this.checkBoxKeepZeroLengthFiles.TabIndex = 3;
+            this.checkBoxKeepZeroLengthFiles.Text = "Keep Zero Length Files";
+            this.checkBoxKeepZeroLengthFiles.UseVisualStyleBackColor = true;
+            this.checkBoxKeepZeroLengthFiles.CheckedChanged += new System.EventHandler(this.checkBoxKeepZeroLengthFiles_CheckedChanged);
             // 
             // buttonForceRemoteExit
             // 
@@ -625,11 +627,22 @@ namespace TransferUniFLEX
             this.buttonForceRemoteExit.UseVisualStyleBackColor = true;
             this.buttonForceRemoteExit.Click += new System.EventHandler(this.buttonForceRemoteExit_Click);
             // 
+            // checkBoxAllowDirectorySelection
+            // 
+            this.checkBoxAllowDirectorySelection.AutoSize = true;
+            this.checkBoxAllowDirectorySelection.Location = new System.Drawing.Point(92, 205);
+            this.checkBoxAllowDirectorySelection.Name = "checkBoxAllowDirectorySelection";
+            this.checkBoxAllowDirectorySelection.Size = new System.Drawing.Size(143, 17);
+            this.checkBoxAllowDirectorySelection.TabIndex = 23;
+            this.checkBoxAllowDirectorySelection.Text = "Allow Directory Selection";
+            this.checkBoxAllowDirectorySelection.UseVisualStyleBackColor = true;
+            this.checkBoxAllowDirectorySelection.Visible = false;
+            // 
             // frmTransfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(509, 457);
+            this.ClientSize = new System.Drawing.Size(509, 476);
             this.Controls.Add(this.checkBoxAllowDirectorySelection);
             this.Controls.Add(this.groupBoxOptions);
             this.Controls.Add(this.groupBoxTCPIP);
@@ -742,6 +755,7 @@ namespace TransferUniFLEX
         private System.Windows.Forms.ToolStripMenuItem forceRemoteExitToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.Button buttonForceRemoteExit;
+        private System.Windows.Forms.CheckBox checkBoxKeepZeroLengthFiles;
     }
 }
 
