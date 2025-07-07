@@ -1720,6 +1720,7 @@ namespace TransferUniFLEX
                 {
                     SerialPort serialPort = OpenComPort();
                     dlg = new frmUniFLEXBrowse(serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
+                    dlg.currentWorkingDirectory = GetCurrentWorkingDirectory();
                     serialPort.Close();
                 }
                 else
@@ -1727,6 +1728,7 @@ namespace TransferUniFLEX
                     if (OpenTCPPort())
                     {
                         dlg = new frmUniFLEXBrowse(Program.remoteAccess.socket, textBoxUniFLEXFileName.Text, selectedFileInfos, textBoxIPAddress.Text, textBoxPort.Text, checkBoxAllowDirectorySelection.Checked);
+                        dlg.currentWorkingDirectory = GetCurrentWorkingDirectory();
                     }
                     else
                     {

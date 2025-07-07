@@ -18,6 +18,7 @@ namespace TransferUniFLEX
         public string selectedFile = "";
         public string currentDirectoryNameToBrowse;
         bool allowDirectorySelection = false;
+        public string currentWorkingDirectory = "";
 
         public frmUniFLEXBrowse(Socket _socket, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, string _ipAddress, string _port, bool _allowDirectorySelection)
         {
@@ -154,6 +155,13 @@ namespace TransferUniFLEX
         {
             //return; // STILL needs work
 
+            Cursor = Cursors.WaitCursor;
+
+            if (currentDirectoryNameToBrowse.Length == 0)
+            {
+                currentDirectoryNameToBrowse = currentWorkingDirectory;
+            }
+
             if (currentDirectoryNameToBrowse.StartsWith("/"))
             {
                 // when the user double clicks an item that is a directory - do a change directory
@@ -214,6 +222,12 @@ namespace TransferUniFLEX
                 Program.remoteAccess.GetRemoteDirectory(currentDirectoryNameToBrowse, false);      // handle recursion at the main form level);
                 LoadListView();
             }
+            else
+            {
+                // get surrent working diectory from UniFLEX
+
+            }
+            Cursor = Cursors.Default;
         }
     }
 }
