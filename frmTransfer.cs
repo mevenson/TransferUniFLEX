@@ -1638,7 +1638,7 @@ namespace TransferUniFLEX
             {
                 // we need a Save file dialog instead.
                 SaveFileDialog dlg = new SaveFileDialog();
-                dlg.FileName = textBoxUniFLEXFileName.Text;
+                dlg.FileName = textBoxLocalFileName.Text;
 
                 DialogResult r = dlg.ShowDialog();
                 if (r == DialogResult.OK)
@@ -1749,7 +1749,8 @@ namespace TransferUniFLEX
                         {
                             // if the single file selected is a directory - add the filename to the current path
                             string selectedFile = dlg.selectedFile;
-                            if (selectedFileInfos[selectedFile].isDirectory)
+                            string selectedFileInfosFilename = Path.GetFileName(selectedFile);
+                            if (selectedFileInfos[selectedFileInfosFilename].isDirectory)
                             {
                                 textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
 
@@ -1769,12 +1770,12 @@ namespace TransferUniFLEX
                                 if (textBoxLocalFileName.Text.Length > 0)
                                 {
                                     if (textBoxLocalFileName.Text.EndsWith("/") || textBoxLocalFileName.Text.EndsWith("\\"))
-                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFile;
+                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFileInfosFilename;
                                     else
-                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFile;
+                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFileInfosFilename;
                                 }
                                 else
-                                    textBoxLocalFileName.Text = selectedFile;
+                                    textBoxLocalFileName.Text = selectedFileInfosFilename;
 
                                 buttonStart.Enabled = true;
                                 startToolStripMenuItem.Enabled = true;

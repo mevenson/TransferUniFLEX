@@ -13,10 +13,10 @@ namespace TransferUniFLEX
     public partial class frmUniFLEXBrowse : Form
     {
 
-        public Dictionary<string, FileInformation> selectedFileInformations = new Dictionary<string, FileInformation> ();  // this is what is already selected when called
-        private Dictionary<string, FileInformation> previouslySelectedFileInformations = new Dictionary<string, FileInformation>();  // this is what is already selected when called
+        public  Dictionary<string, FileInformation> selectedFileInformations = new Dictionary<string, FileInformation> ();          // this is what is used by the caller to know  what is selected
+        private Dictionary<string, FileInformation> previouslySelectedFileInformations = new Dictionary<string, FileInformation>(); // this is what is already selected when called
         public string selectedFile = "";
-        string currentDirectoryNameToBrowse;
+        public string currentDirectoryNameToBrowse;
         bool allowDirectorySelection = false;
 
         public frmUniFLEXBrowse(Socket _socket, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, string _ipAddress, string _port, bool _allowDirectorySelection)
@@ -120,7 +120,12 @@ namespace TransferUniFLEX
             if (selectedIndices.Count != 0)
             {
                 if (selectedIndices.Count == 1)
-                    selectedFile = listViewFiles.Items[selectedIndices[0]].SubItems[7].Text.ToString();
+                {
+                    if (!currentDirectoryNameToBrowse.EndsWith("/"))
+                        selectedFile = currentDirectoryNameToBrowse + "/" + listViewFiles.Items[selectedIndices[0]].SubItems[7].Text.ToString();
+                    else
+                        selectedFile = currentDirectoryNameToBrowse + listViewFiles.Items[selectedIndices[0]].SubItems[7].Text.ToString();
+                }
 
                 // make a copy of the FileInformation list without any directories in it and only the selected items
                 // from the listview control
@@ -147,9 +152,7 @@ namespace TransferUniFLEX
 
         private void listViewFiles_DoubleClick(object sender, EventArgs e)
         {
-            return; // STILL needs work
-
-            // only allow changing directories if the original directory to browse is the root
+            //return; // STILL needs work
 
             if (currentDirectoryNameToBrowse.StartsWith("/"))
             {
@@ -170,12 +173,18 @@ namespace TransferUniFLEX
                     if (fileInfo.filename == "..")      // go up one directory
                     {
                         string[] pathParts = currentDirectoryNameToBrowse.Split('/');
+                        if (currentDirectoryNameToBrowse.StartsWith("/"))
+                            newpath = "/";
+
                         for (int i = 0; i < pathParts.Length - 1; i++)
                         {
-                            if (newpath.Length > 0)
-                                newpath += "/";
+                            if (pathParts[i].Length > 0)
+                            {
+                                if (newpath.Length > 0 && newpath != "/")
+                                    newpath += "/";
 
-                            newpath = pathParts[i];
+                                newpath += pathParts[i];
+                            }
                         }
 
                         // in case the old path was current working directory (blank)
@@ -192,7 +201,10 @@ namespace TransferUniFLEX
                         }
                         else
                         {
-                            newpath = currentDirectoryNameToBrowse + fileInfo.filename;
+                            if (!currentDirectoryNameToBrowse.EndsWith("/"))
+                                newpath = currentDirectoryNameToBrowse + "/" + fileInfo.filename;
+                            else
+                                newpath = currentDirectoryNameToBrowse + fileInfo.filename;
                         }
                     }
 

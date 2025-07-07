@@ -1,0 +1,74 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34301.259
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransferUniFLEX", "TransferUniFLEX.csproj", "{ABBF6DE1-A117-4904-9C8C-3887FCABF038}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtractFromUniFLEXPartitionedSDCard", "..\ExtractFromUniFLEXPartitionedSDCard\ExtractFromUniFLEXPartitionedSDCard.csproj", "{05E65399-4B39-4F03-BC5B-56257441424D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiskImageMaintenance", "..\DiskImageMaintenance\DiskImageMaintenance.csproj", "{382F7A28-67EF-4881-A5E9-47FF501071DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamineAssembly", "..\ExamineAssembly\ExamineAssembly.csproj", "{F60D1ECE-BC70-4AB3-BAF5-6AFF7F2C363E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakeBlankUniFLEXDisketteImages", "..\MakeBlankUniFLEXDisketteImages\MakeBlankUniFLEXDisketteImages.csproj", "{A952775E-75F7-4BB0-840A-706EB10BCD3C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{81A0C387-BC6B-4485-A165-3BC5384DCB06}"
+	ProjectSection(SolutionItems) = preProject
+		..\SetupInnoScript_TransferUniFLEX.iss = ..\SetupInnoScript_TransferUniFLEX.iss
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABBF6DE1-A117-4904-9C8C-3887FCABF038}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABBF6DE1-A117-4904-9C8C-3887FCABF038}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABBF6DE1-A117-4904-9C8C-3887FCABF038}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABBF6DE1-A117-4904-9C8C-3887FCABF038}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05E65399-4B39-4F03-BC5B-56257441424D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05E65399-4B39-4F03-BC5B-56257441424D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05E65399-4B39-4F03-BC5B-56257441424D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05E65399-4B39-4F03-BC5B-56257441424D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{382F7A28-67EF-4881-A5E9-47FF501071DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{382F7A28-67EF-4881-A5E9-47FF501071DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{382F7A28-67EF-4881-A5E9-47FF501071DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{382F7A28-67EF-4881-A5E9-47FF501071DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F60D1ECE-BC70-4AB3-BAF5-6AFF7F2C363E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F60D1ECE-BC70-4AB3-BAF5-6AFF7F2C363E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F60D1ECE-BC70-4AB3-BAF5-6AFF7F2C363E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F60D1ECE-BC70-4AB3-BAF5-6AFF7F2C363E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A952775E-75F7-4BB0-840A-706EB10BCD3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A952775E-75F7-4BB0-840A-706EB10BCD3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A952775E-75F7-4BB0-840A-706EB10BCD3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A952775E-75F7-4BB0-840A-706EB10BCD3C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84FD57EB-497B-42D0-9A4D-AE2E99FD5BC5}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 6
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://354341-lmdbserv:8080/tfs/ecs
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = TransferUniFLEX.csproj
+		SccLocalPath1 = .
+		SccProjectUniqueName2 = ..\\ExtractFromUniFLEXPartitionedSDCard\\ExtractFromUniFLEXPartitionedSDCard.csproj
+		SccProjectName2 = ../ExtractFromUniFLEXPartitionedSDCard
+		SccLocalPath2 = ..\\ExtractFromUniFLEXPartitionedSDCard
+		SccProjectUniqueName3 = ..\\DiskImageMaintenance\\DiskImageMaintenance.csproj
+		SccProjectName3 = ../DiskImageMaintenance
+		SccLocalPath3 = ..\\DiskImageMaintenance
+		SccProjectUniqueName4 = ..\\ExamineAssembly\\ExamineAssembly.csproj
+		SccProjectName4 = ../ExamineAssembly
+		SccLocalPath4 = ..\\ExamineAssembly
+		SccProjectUniqueName5 = ..\\MakeBlankUniFLEXDisketteImages\\MakeBlankUniFLEXDisketteImages.csproj
+		SccProjectName5 = ../MakeBlankUniFLEXDisketteImages
+		SccLocalPath5 = ..\\MakeBlankUniFLEXDisketteImages
+	EndGlobalSection
+EndGlobal
