@@ -12,8 +12,8 @@
           PC using TCPIP.
 
     3.  transfer
-          The command line UniFLEX or minix program that runs to provide file transfer capabilities between it and 
-          PC using an  RS232 port.
+          The command line UniFLEX or minix program that runs to provide file transfer capabilities between
+          it and PC using an  RS232 port.
           
   TransferUniFLEX - transfer was designed to accomplish the following objectives:
 
