@@ -10,9 +10,14 @@ using System.Net.Sockets;
 
 namespace TransferUniFLEX
 {
+    // this class gets instantiated by Program. All access to it's properties and method must be called through:
+    //
+    //      Program.serialPort.<method or propertiy>
+    //
+
     class RemoteAccess
     {
-        public SerialPort serialPort = null;
+        public SerialPort serialPort = null;                        // RemoteAccess owns the serial port.
         public Socket socket = null;
 
         public byte acceptDirectoryNameToBrowse = 0x03;             // tells the remote to accept a directory name to browse
@@ -121,11 +126,11 @@ namespace TransferUniFLEX
             }
             catch (TimeoutException ex)
             {
-                MessageBox.Show($"Read operation timed out waiting for ack: {ex.Message}");
+                MsgBox.Show($"Read operation timed out waiting for ack: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Read operation failed waiting for ack: {ex.Message}");
+                MsgBox.Show($"Read operation failed waiting for ack: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
 
             return response;
@@ -236,7 +241,7 @@ namespace TransferUniFLEX
 
                     foreach (var key in sortedKeys)
                     {
-                        if ((allFileInfos[key].stat.st_mode & 0x0900) == 0x0900)
+                        if ((allFileInfos[key].stat.st_mode & Program.isDirMask) == Program.isDirMask)
                             sortedInformations.Add(key, allFileInfos[key]);
                     }
 
@@ -244,7 +249,7 @@ namespace TransferUniFLEX
 
                     foreach (var key in sortedKeys)
                     {
-                        if ((allFileInfos[key].stat.st_mode & 0x0900) != 0x0900)
+                        if ((allFileInfos[key].stat.st_mode & Program.isDirMask) != Program.isDirMask)
                             sortedInformations.Add(key, allFileInfos[key]);
                     }
                 }
@@ -353,7 +358,7 @@ namespace TransferUniFLEX
 
                         foreach (var key in sortedKeys)
                         {
-                            if ((allFileInfos[key].stat.st_mode & 0x0900) == 0x0900)
+                            if ((allFileInfos[key].stat.st_mode & Program.isDirMask) == Program.isDirMask)
                                 sortedInformations.Add(key, allFileInfos[key]);
                         }
 
@@ -361,14 +366,14 @@ namespace TransferUniFLEX
 
                         foreach (var key in sortedKeys)
                         {
-                            if ((allFileInfos[key].stat.st_mode & 0x0900) != 0x0900)
+                            if ((allFileInfos[key].stat.st_mode & Program.isDirMask) != Program.isDirMask)
                                 sortedInformations.Add(key, allFileInfos[key]);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MsgBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.None);
                 }
             }
 
@@ -399,7 +404,7 @@ namespace TransferUniFLEX
         
         public bool isDirectory
         {
-            get {return (stat.st_mode & 0x0900) == 0x0900 ? true : false;}
+            get {return (stat.st_mode & Program.isDirMask) == Program.isDirMask ? true : false;}
         }
 
         public void fillStat()

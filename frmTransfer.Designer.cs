@@ -85,6 +85,7 @@ namespace TransferUniFLEX
             this.checkBoxKeepZeroLengthFiles = new System.Windows.Forms.CheckBox();
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
             this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
+            this.checkBoxMinix = new System.Windows.Forms.CheckBox();
             this.groupBoxDirection.SuspendLayout();
             this.currentFileProgress.SuspendLayout();
             this.groupBoxOperatorEntertainment.SuspendLayout();
@@ -639,11 +640,23 @@ namespace TransferUniFLEX
             this.checkBoxAllowDirectorySelection.UseVisualStyleBackColor = true;
             this.checkBoxAllowDirectorySelection.Visible = false;
             // 
+            // checkBoxMinix
+            // 
+            this.checkBoxMinix.AutoSize = true;
+            this.checkBoxMinix.Location = new System.Drawing.Point(12, 181);
+            this.checkBoxMinix.Name = "checkBoxMinix";
+            this.checkBoxMinix.Size = new System.Drawing.Size(50, 17);
+            this.checkBoxMinix.TabIndex = 24;
+            this.checkBoxMinix.Text = "Minix";
+            this.checkBoxMinix.UseVisualStyleBackColor = true;
+            this.checkBoxMinix.CheckedChanged += new System.EventHandler(this.checkBoxMinix_CheckedChanged);
+            // 
             // frmTransfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1050, 476);
+            this.Controls.Add(this.checkBoxMinix);
             this.Controls.Add(this.checkBoxAllowDirectorySelection);
             this.Controls.Add(this.groupBoxOptions);
             this.Controls.Add(this.groupBoxTCPIP);
@@ -757,6 +770,7 @@ namespace TransferUniFLEX
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.Button buttonForceRemoteExit;
         private System.Windows.Forms.CheckBox checkBoxKeepZeroLengthFiles;
+        private System.Windows.Forms.CheckBox checkBoxMinix;
     }
 }
 

@@ -35,6 +35,8 @@ namespace TransferUniFLEX
         byte sendCurrentDirectoryCommand = 0x05;    // tell the remote to send us a string containing the current working directory
         byte getBlockDeviceCommand       = 0x07;    // tell remote to send the complete contents of a block device
 
+        ToolStripStatusLabel statusLabel;
+
         static ushort[] crc_table = new ushort[]
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 
@@ -97,11 +99,17 @@ namespace TransferUniFLEX
         private SerialPort OpenComPort()
         {
             string portName = comboBoxCOMPorts.Text;
-            SerialPort serialPort = null;
 
+            // if there is an open serial port - close it in case the selected port has changed
+            if (Program.remoteAccess.serialPort != null && Program.remoteAccess.serialPort.IsOpen)
+            {
+                Program.remoteAccess.serialPort.Close();
+            }
+
+            // now open the one specified in the comboBoxCOMPorts.Text combo box
             try
             {
-                serialPort = new SerialPort(portName);
+                Program.remoteAccess.serialPort = new SerialPort(portName);
 
                 // Optional: Configure other SerialPort settings such as BaudRate, Parity, DataBits, StopBits, etc.
 
@@ -111,13 +119,13 @@ namespace TransferUniFLEX
                 bool success = Int32.TryParse(stringBaudRate, out baudRate);
 
                 //serialPort.BaudRate = baudRate;
-                serialPort.BaudRate = baudRate;
-                serialPort.Parity = Parity.None;
-                serialPort.DataBits = 8;
-                serialPort.StopBits = StopBits.One;
-                serialPort.ReadTimeout = 5000;      // set timeout to 5 seconds
+                Program.remoteAccess.serialPort.BaudRate = baudRate;
+                Program.remoteAccess.serialPort.Parity = Parity.None;
+                Program.remoteAccess.serialPort.DataBits = 8;
+                Program.remoteAccess.serialPort.StopBits = StopBits.One;
+                Program.remoteAccess.serialPort.ReadTimeout = 5000;      // set timeout to 5 seconds
 
-                serialPort.Open();
+                Program.remoteAccess.serialPort.Open();
 
                 // MsgBox.Show($"COM Port {portName} opened successfully.");
             }
@@ -129,10 +137,7 @@ namespace TransferUniFLEX
             {
                 // MsgBox.Show($"An error occurred: {ex.Message}");
             }
-
-            Program.remoteAccess.serialPort = serialPort;
-
-            return serialPort;
+            return Program.remoteAccess.serialPort;
         }
 
         private bool OpenTCPPort(bool forceReOpen = false)
@@ -327,28 +332,33 @@ namespace TransferUniFLEX
 
             if (directoryOK)
             {
-                currentFileProgress.Text = Path.GetFileName(localFilename);
-                currentFileProgress.Items.Clear();
+                currentFileProgress.Text = Path.GetFileName(localFilename);       // show the local filename as the control's text
 
-                // Create and add a ToolStripStatusLabel programmatically
-
-                ToolStripStatusLabel statusLabel = new ToolStripStatusLabel(filename + " -> " + localFilename);
-                currentFileProgress.Items.Add(statusLabel);
-
-                Application.DoEvents();     // let the system update the status bar.
+                // show the activity as the item.
+                currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+                statusLabel.Text = $" {filename} ->  {localFilename}";  // format the string
+                currentFileProgress.Items.Add(statusLabel);             // add the item
+                currentFileProgress.Refresh();                          // Force redraw
+                Application.DoEvents();                                 // let the system update the status bar.
 
                 DateTime remoteFileDateTime = DateTime.Now;
                 using (BinaryWriter writer = new BinaryWriter(File.Open(localFilename, FileMode.Create, FileAccess.Write)))
                 {
                     if (radioButtonCOMPort.Checked)
                     {
+                        textBoxResponses.Text += $"Retrieving: {filename}";
+
+                        // make sure the line we just added is visible
+                        textBoxResponses.SelectionStart = textBoxResponses.Text.Length;     
+                        textBoxResponses.ScrollToCaret();
+
                         // start by sending a command to remote to accept a filename to send the file
                         response = SendByte(serialPort, sendFileCommand);
 
                         if (response == 0x06)
                         {
                             //// remote is ready to receive the filename. make sure it is not a directory name
-                            //if ((mode & 0x0900) != 0x0900)
+                            //if ((mode & Program.isDirMask) != Program.isDirMask)
                             //{
                             // send the filename one byte at a time - remote will ACK each byte sent
 
@@ -415,6 +425,7 @@ namespace TransferUniFLEX
                                     break;
                             }
                             //}
+                            textBoxResponses.Text += " - done\r\n";
                         }
                     }
                     else
@@ -541,7 +552,11 @@ namespace TransferUniFLEX
                 }
             }
 
-            currentFileProgress.Items.Clear();
+            currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+            statusLabel.Text = "Idle";                              // format the string
+            currentFileProgress.Items.Add(statusLabel);             // add the item
+            currentFileProgress.Refresh();                          // Force redraw
+            Application.DoEvents();                                 // let the system update the status bar.
 
             return error;
         }
@@ -1020,20 +1035,31 @@ namespace TransferUniFLEX
                 }
             }
 
+            currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+            statusLabel.Text = "Idle";                              // format the string
+            currentFileProgress.Items.Add(statusLabel);             // add the item
+            currentFileProgress.Refresh();                          // Force redraw
+            Application.DoEvents();                                 // let the system update the status bar.
+
             return error;
         }
 
         private bool Transfer (string localFilename, string remoteFilename, bool uniFLEXFilenameIsDirectory, bool isDirectoryTransfer = false)
         {
+            statusLabel = new ToolStripStatusLabel();
+            statusLabel.Text = "Idle";
+            currentFileProgress.Items.Add(statusLabel);
+
+            Application.DoEvents();
+
             // error will be set if we should not proceed after theis transfer.
             // so return !error.
             bool error = false;
-            SerialPort serialPort = null;
 
             bool proceed = true;
             if (radioButtonCOMPort.Checked)
             { 
-                serialPort = OpenComPort();
+                OpenComPort();
             }
             else if (radioButtonTCPIP.Checked)
             {
@@ -1047,7 +1073,7 @@ namespace TransferUniFLEX
 
                 if (radioButtonSend.Checked)
                 {
-                    error = SendFileNameAndSendFile(serialPort, localFilename, remoteFilename, uniFLEXFilenameIsDirectory, isDirectoryTransfer);
+                    error = SendFileNameAndSendFile(Program.remoteAccess.serialPort, localFilename, remoteFilename, uniFLEXFilenameIsDirectory, isDirectoryTransfer);
                 }
                 else
                 {
@@ -1072,11 +1098,11 @@ namespace TransferUniFLEX
                             fileToGet = textBoxLocalFileName.Text;
                         }
 
-                        error = SendFileNameAndRecieveFile(serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
+                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
                     }
                     else
                     {
-                        error = SendFileNameAndRecieveFile(serialPort, localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), 0);
+                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), 0);
                     }
                 }
             }
@@ -1088,7 +1114,10 @@ namespace TransferUniFLEX
             // all done - close the serial port if we opened it
 
             if (radioButtonCOMPort.Checked)
-                serialPort.Close(); // Close the port when done.
+            {
+                Program.remoteAccess.serialPort.Close(); // Close the port when done.
+                Program.remoteAccess.serialPort = null;
+            }
 
             return !error;
         }
@@ -1170,9 +1199,8 @@ namespace TransferUniFLEX
             return isAvaiable;
         }
 
-        private string GetCurrentWorkingDirectory ()
+        private string GetCurrentWorkingDirectory (SerialPort serialPort)
         {
-
             byte[] request = new byte[1];
             request[0] = sendCurrentDirectoryCommand;
             byte[] response = new byte[512];
@@ -1229,26 +1257,44 @@ namespace TransferUniFLEX
             }
             else
             {
-                SerialPort serialPort = OpenComPort();
-                serialPort.Write(request, 0, 1);
-                serialPort.Read(response, 0, 1);        // transfer will send an ACK before the directory name
-                if (response[0] == 0x06)
+                OpenComPort();
+                if (Program.remoteAccess.serialPort != null)
                 {
-                    for (int i = 0; i < 511; i++)
+                    try
                     {
+                        Program.remoteAccess.serialPort.Write(request, 0, 1);
                         try
                         {
-                            serialPort.Read(response, i, 1);    // stuff the bytes into response
-                            if (response[i] == 0x00)            // null character signals end of response
-                                break;
+                            Program.remoteAccess.serialPort.Read(response, 0, 1);        // transfer will send an ACK before the directory name
+                            if (response[0] == 0x06)
+                            {
+                                for (int i = 0; i < 511; i++)
+                                {
+                                    try
+                                    {
+                                        Program.remoteAccess.serialPort.Read(response, i, 1);    // stuff the bytes into response
+                                        if (response[i] == 0x00)            // null character signals end of response
+                                            break;
+                                    }
+                                    catch
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
                         }
                         catch
                         {
-                            break;
+                            MsgBox.Show("serial read failed");
                         }
                     }
+                    catch 
+                    {
+                        MsgBox.Show("serial write failed");
+                    }
+                    Program.remoteAccess.serialPort.Close();
+                    Program.remoteAccess.serialPort = null;
                 }
-                serialPort.Close();
             }
 
             return ASCIIEncoding.ASCII.GetString(response).Trim().Replace("\0", "");
@@ -1343,6 +1389,8 @@ namespace TransferUniFLEX
             groupBoxTCPIP.Top  = groupBoxCOMPort.Top;
             groupBoxTCPIP.Left = groupBoxCOMPort.Left;
 
+            checkBoxMinix.Checked = Properties.Settings.Default.isMinix;
+
             ShowVersionInTitle(null);
         }
 
@@ -1360,7 +1408,7 @@ namespace TransferUniFLEX
             {
                 // we only need the current working directory if we are sending
 
-                currentWorkingDirectory = GetCurrentWorkingDirectory();
+                currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
 
                 if (registryKey != null)
                 {
@@ -1402,8 +1450,24 @@ namespace TransferUniFLEX
                             else
                                 proceed = true;
 
-                            string targetDirectory = textBoxLocalDirName.Text.Replace(textBoxDirectoryReplaceString.Text, "");  // do this here so we only have to do it once
-                            targetDirectory += Path.Combine(targetDirectory, textBoxUniFLEXFileName.Text);
+                            //char[] trimChars = new char[2];
+                            //trimChars[0] = '\\';
+                            //trimChars[1] = (char)0x00;
+
+                            //if (textBoxDirectoryReplaceString.Text.Length == 0)
+                            //    textBoxDirectoryReplaceString.Text = Path.GetDirectoryName(textBoxLocalDirName.Text);
+
+                            //if (textBoxDirectoryReplaceString.Text.EndsWith("\\"))
+                            //    textBoxDirectoryReplaceString.Text.TrimEnd(trimChars);
+
+                            //string targetDirectory = textBoxLocalDirName.Text.Replace(textBoxDirectoryReplaceString.Text, "");  // do this here so we only have to do it once
+
+                            //if (targetDirectory.StartsWith("\\"))
+                            //    targetDirectory.TrimStart(trimChars);
+
+                            //targetDirectory += Path.Combine(targetDirectory, textBoxUniFLEXFileName.Text);
+
+                            string targetDirectory = textBoxUniFLEXFileName.Text;
 
                             if (checkBoxRecursive.Checked)
                             {
@@ -1434,7 +1498,7 @@ namespace TransferUniFLEX
                                     //
                                     // false will be returned if we should not proceed
 
-                                    string remoteDirectory = Path.Combine(targetDirectory, filename.Replace(textBoxDirectoryReplaceString.Text, ""));
+                                    string remoteDirectory = Path.Combine(targetDirectory, filename.Replace(textBoxLocalDirName.Text, ""));
                                     remoteDirectory = remoteDirectory.Replace("\\", "/");
                                     remoteDirectory = textBoxUniFLEXFileName.Text + remoteDirectory;
 
@@ -1531,7 +1595,7 @@ namespace TransferUniFLEX
             }
             else
             {
-                if (selectedFileInfos.Count > 0)
+                if (selectedFileInfos.Count > 1)
                 {
                     DialogResult result = DialogResult.Yes;      // default to yes in case warnings are off
                     if (!checkBoxWarningsOff.Checked)
@@ -1628,23 +1692,56 @@ namespace TransferUniFLEX
                     if (dlg.FileNames.Length == 1) // && textBoxUniFLEXFileName.Text.Length == 0)
                     {
                         textBoxUniFLEXFileName.Text = Path.GetFileName(dlg.FileName);
-                        labelUniFLEXFileName.Text = "UniFLEX File Name";
+                        if (checkBoxMinix.Checked)
+                            labelUniFLEXFileName.Text = "Minix File Name";
+                        else
+                            labelUniFLEXFileName.Text = "UniFLEX File Name";
                     }
                     else
-                        labelUniFLEXFileName.Text = "UniFLEX Directory";
+                    {
+                        if (checkBoxMinix.Checked)
+                            labelUniFLEXFileName.Text = "Minix Directory";
+                        else
+                            labelUniFLEXFileName.Text = "UniFLEX Directory";
+                    }
                 }
             }
             else
             {
                 // we need a Save file dialog instead.
+
                 SaveFileDialog dlg = new SaveFileDialog();
                 dlg.FileName = textBoxLocalFileName.Text;
 
-                DialogResult r = dlg.ShowDialog();
-                if (r == DialogResult.OK)
+                //// old code
+                //DialogResult r = dlg.ShowDialog();
+                //if (r == DialogResult.OK)
+                //{
+                //    textBoxLocalFileName.Text = dlg.FileName;
+                //}
+                ////
+                ///
+                // code from chatGPT
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.LastUsedFolder))
                 {
+                    dlg.InitialDirectory = Properties.Settings.Default.LastUsedFolder;
+                }
+
+                //dlg.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    // Save the selected folder path for next time
+                    string path = System.IO.Path.GetDirectoryName(dlg.FileName);
+
+                    Properties.Settings.Default.LastUsedFolder = path;
+                    Properties.Settings.Default.Save();
+
+                    // Do something with dlg.FileName...
+
                     textBoxLocalFileName.Text = dlg.FileName;
                 }
+                // end of code from charGPT
             }
             SetStartButtonStatus();
         }
@@ -1665,14 +1762,17 @@ namespace TransferUniFLEX
                 string selectedDirectory = System.IO.Path.GetDirectoryName(dlg.FileName);
                 textBoxLocalDirName.Text = selectedDirectory;
 
-                if (textBoxUniFLEXFileName.Text.Length == 0)
-                {
-                    string [] parts = textBoxLocalDirName.Text.Replace(@"\", "/").Split('/');
+                //if (textBoxUniFLEXFileName.Text.Length == 0)
+                //{
+                //    string [] parts = textBoxLocalDirName.Text.Replace(@"\", "/").Split('/');
 
-                    if (parts.Length > 0)
-                        textBoxUniFLEXFileName.Text = parts[parts.Length - 1];
-                }
-                labelUniFLEXFileName.Text = "UniFLEX Directory";
+                //    if (parts.Length > 0)
+                //        textBoxUniFLEXFileName.Text = parts[parts.Length - 1];
+                //}
+                if (checkBoxMinix.Checked)
+                    labelUniFLEXFileName.Text = "Minix Directory";
+                else
+                    labelUniFLEXFileName.Text = "UniFLEX Directory";
             }
             SetStartButtonStatus();
         }
@@ -1718,17 +1818,16 @@ namespace TransferUniFLEX
                 frmUniFLEXBrowse dlg = null;
                 if (radioButtonCOMPort.Checked)
                 {
-                    SerialPort serialPort = OpenComPort();
-                    dlg = new frmUniFLEXBrowse(serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
-                    dlg.currentWorkingDirectory = GetCurrentWorkingDirectory();
-                    serialPort.Close();
+                    OpenComPort();
+                    dlg = new frmUniFLEXBrowse(Program.remoteAccess.serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
+                    dlg.currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
                 }
                 else
                 {
                     if (OpenTCPPort())
                     {
                         dlg = new frmUniFLEXBrowse(Program.remoteAccess.socket, textBoxUniFLEXFileName.Text, selectedFileInfos, textBoxIPAddress.Text, textBoxPort.Text, checkBoxAllowDirectorySelection.Checked);
-                        dlg.currentWorkingDirectory = GetCurrentWorkingDirectory();
+                        dlg.currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
                     }
                     else
                     {
@@ -1741,68 +1840,95 @@ namespace TransferUniFLEX
 
                 if (dlg != null)
                 {
-                    DialogResult result = dlg.ShowDialog();
-                    if (result == DialogResult.OK)
+                    if (dlg.currentWorkingDirectory != "")      // GetCurrentWorkingDirectory will return an empty directory name if none found
                     {
-                        selectedFileInfos = dlg.selectedFileInformations;
-
-                        // user wants to get the single file selected in the list view.
-                        if (selectedFileInfos.Count == 1)
+                        DialogResult result = dlg.ShowDialog();
+                        if (result == DialogResult.OK)
                         {
-                            // if the single file selected is a directory - add the filename to the current path
-                            string selectedFile = dlg.selectedFile;
-                            string selectedFileInfosFilename = Path.GetFileName(selectedFile);
-                            if (selectedFileInfos[selectedFileInfosFilename].isDirectory)
+                            selectedFileInfos = dlg.selectedFileInformations;
+
+                            // user wants to get the single file selected in the list view.
+                            if (selectedFileInfos.Count == 1)
                             {
-                                textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
-
-                                buttonStart.Enabled = true;
-                                startToolStripMenuItem.Enabled = true;
-                                labelUniFLEXFileName.Text = "UniFLEX Directory";
-
-                                // enabale and disable the appropriate text boxes
-                                textBoxLocalFileName.Enabled = false;
-                                buttonBrowseLocalFileName.Enabled = false;
-                                textBoxLocalDirName.Enabled = true;
-                                buttonBrowseLocalDirectory.Enabled = true;
-                            }
-                            else    // single file selected and it is NOT a directory - handle normal
-                            {       // fill in the textboxes appropriately
-                                textBoxUniFLEXFileName.Text = selectedFile;
-                                if (textBoxLocalFileName.Text.Length > 0)
+                                // if the single file selected is a directory - add the filename to the current path
+                                string selectedFile = dlg.selectedFile;
+                                string selectedFileInfosFilename = Path.GetFileName(selectedFile);
+                                if (selectedFileInfos[selectedFileInfosFilename].isDirectory)
                                 {
-                                    if (textBoxLocalFileName.Text.EndsWith("/") || textBoxLocalFileName.Text.EndsWith("\\"))
-                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFileInfosFilename;
+                                    textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
+
+                                    buttonStart.Enabled = true;
+                                    startToolStripMenuItem.Enabled = true;
+                                    if (checkBoxMinix.Checked)
+                                        labelUniFLEXFileName.Text = "Minix Directory";
                                     else
-                                        textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFileInfosFilename;
+                                        labelUniFLEXFileName.Text = "UniFLEX Directory";
+
+                                    // enabale and disable the appropriate text boxes
+                                    textBoxLocalFileName.Enabled = false;
+                                    buttonBrowseLocalFileName.Enabled = false;
+                                    textBoxLocalDirName.Enabled = true;
+                                    buttonBrowseLocalDirectory.Enabled = true;
                                 }
+                                else    // single file selected and it is NOT a directory - handle normal
+                                {       // fill in the textboxes appropriately
+
+                                    string justTheSelectedFileName = Path.GetFileName(selectedFile);
+                                    textBoxUniFLEXFileName.Text = selectedFile;
+
+                                    string justTheLocalDirectoryName = "";
+                                    if (textBoxLocalFileName.Text.Length > 0)
+                                        justTheLocalDirectoryName = Path.GetDirectoryName(textBoxLocalFileName.Text);
+
+                                    if (justTheLocalDirectoryName.Length > 0)
+                                    {
+                                        if (textBoxLocalFileName.Text.EndsWith("/") || textBoxLocalFileName.Text.EndsWith("\\"))
+                                            textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFileInfosFilename;
+                                        else
+                                            textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFileInfosFilename;
+                                    }
+                                    else //textBoxLocalFileName.Text = selectedFileInfosFilename;
+                                    {
+                                        string lastUsedFolder = Properties.Settings.Default.LastUsedFolder;
+                                        if (lastUsedFolder.Length > 0)
+                                            textBoxLocalFileName.Text = Path.Combine(lastUsedFolder, justTheSelectedFileName);
+                                        else
+                                            textBoxLocalFileName.Text = justTheSelectedFileName;
+                                    }
+
+                                    buttonStart.Enabled = true;
+                                    startToolStripMenuItem.Enabled = true;
+                                    if (checkBoxMinix.Checked)
+                                        labelUniFLEXFileName.Text = "Minix File Name";
+                                    else
+                                        labelUniFLEXFileName.Text = "UniFLEX File Name";
+
+                                    // enabale and disable the appropriate text boxes
+                                    textBoxLocalFileName.Enabled = true;
+                                    buttonBrowseLocalFileName.Enabled = true;
+                                    textBoxLocalDirName.Enabled = false;
+                                    buttonBrowseLocalDirectory.Enabled = false;
+                                }
+                            }
+                            else
+                            {
+                                // user wants to get the multiple files from the list view or a directory was selected. so it's OK to enable Start
+
+                                if (checkBoxMinix.Checked)
+                                    labelUniFLEXFileName.Text = "Minix Directory ";
                                 else
-                                    textBoxLocalFileName.Text = selectedFileInfosFilename;
+                                    labelUniFLEXFileName.Text = "UniFLEX Directory";
 
                                 buttonStart.Enabled = true;
                                 startToolStripMenuItem.Enabled = true;
-                                labelUniFLEXFileName.Text = "UniFLEX File Name";
 
-                                // enabale and disable the appropriate text boxes
-                                textBoxLocalFileName.Enabled = true; 
-                                buttonBrowseLocalFileName.Enabled = true;
-                                textBoxLocalDirName.Enabled = false; 
-                                buttonBrowseLocalDirectory.Enabled = false;
+                                textBoxUniFLEXFileName.Text = dlg.currentWorkingDirectory;
+                                textBoxLocalFileName.Enabled = false; buttonBrowseLocalFileName.Enabled = false;
+                                textBoxLocalDirName.Enabled = true; buttonBrowseLocalDirectory.Enabled = true;
+
+                                // Browser control has already filled in our selectd file information dictionary weeding out the directories and
+                                // only populating it with the files selected. So there is nothing more to do here
                             }
-                        }
-                        else
-                        {
-                            // user wants to get the multiple files from the list view or a directory was selected. so it's OK to enable Start
-
-                            labelUniFLEXFileName.Text = "UniFLEX Directory";
-                            buttonStart.Enabled = true;
-                            startToolStripMenuItem.Enabled = true;
-
-                            textBoxLocalFileName.Enabled = false; buttonBrowseLocalFileName.Enabled = false;
-                            textBoxLocalDirName.Enabled = true; buttonBrowseLocalDirectory.Enabled = true;
-
-                            // Browser control has already filled in our selectd file information dictionary weeding out the directories and
-                            // only populating it with the files selected. So there is nothing more to do here
                         }
                     }
                 }
@@ -1955,7 +2081,7 @@ namespace TransferUniFLEX
             {
                 if (checkBoxRecursive.Checked)
                 {
-                    MessageBox.Show("This is still not working");
+                    MsgBox.Show("This is still not working", "Notice", MessageBoxButtons.OK, MessageBoxIcon.None);
                 }
                 // enable for Receive from UniFLEX 
                 checkBoxFixLineFeeds.Visible = false;
@@ -1988,7 +2114,7 @@ namespace TransferUniFLEX
             {
                 if (radioButtonReceive.Checked)
                 {
-                    MessageBox.Show("This is still not working");
+                    MsgBox.Show("This is still not working", "Notice", MessageBoxButtons.OK, MessageBoxIcon.None);
                 }
                 textBoxLocalDirName.Enabled = true;
                 textBoxLocalFileName.Enabled = false;
@@ -2237,6 +2363,39 @@ namespace TransferUniFLEX
         {
             OpenTCPPort();
             Program.remoteAccess.SendByte(0x55);
+        }
+
+        private void checkBoxMinix_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBoxMinix.Checked)
+            {
+                Program.isMinix = true;
+                radioButtonCOMPort.Text = "COM Port - uses DUART";
+                radioButtonTCPIP.Enabled = false;
+                radioButtonCOMPort.Checked = true;
+                radioButtonSend.Text = "Send To Minix";
+                radioButtonReceive.Text = "Receive From Minix";
+                labelUniFLEXFileName.Text = labelUniFLEXFileName.Text.Replace("UniFLEX", "Minix");
+                checkBoxAllowDirectorySelection.Enabled = false;
+                Program.isDirMask = 0x4000;
+
+                Properties.Settings.Default.isMinix = true;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                Program.isMinix = false;
+                radioButtonCOMPort.Text = "COM Port - uses CPU09SR4";
+                radioButtonTCPIP.Enabled = true;
+                radioButtonSend.Text = "Send To UniFLEX";
+                radioButtonReceive.Text = "Receive From UniFLEX";
+                labelUniFLEXFileName.Text = labelUniFLEXFileName.Text.Replace("Minix", "UniFLEX");
+                checkBoxAllowDirectorySelection.Enabled = true;
+                Program.isDirMask = 0x0900;
+
+                Properties.Settings.Default.isMinix = false;
+                Properties.Settings.Default.Save();
+            }
         }
     }
 }

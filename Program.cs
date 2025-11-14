@@ -15,6 +15,8 @@ namespace TransferUniFLEX
         // it is the one and only instamce of this object - use it wisely
 
         public static RemoteAccess remoteAccess = new RemoteAccess();
+        public static bool isMinix = false;
+        public static ushort isDirMask = 0x0900;
 
         static public Socket OpenSocket(string _ipAddress, string _port)
         {
@@ -29,7 +31,7 @@ namespace TransferUniFLEX
             }
             catch (Exception e)
             {
-                MessageBox.Show(string.Format("Unable to connect to UniFLEX machine via TCP/IP\r\n{0}", e.Message));
+                MsgBox.Show(string.Format("Unable to connect to UniFLEX machine via TCP/IP\r\n{0}", e.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
 
             return socket;

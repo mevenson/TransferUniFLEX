@@ -62,7 +62,7 @@ namespace TransferUniFLEX
                 foreach (ListViewItem lvi in listView.Items)
                 {
                     FileInformation fileInformation = (FileInformation)lvi.Tag;
-                    if ((fileInformation.stat.st_mode & 0x0900) == 0x0900)
+                    if ((fileInformation.stat.st_mode & Program.isDirMask) == Program.isDirMask)
                     {
                         if (!allowDirectorySelection)
                             lvi.Selected = false;
@@ -122,6 +122,10 @@ namespace TransferUniFLEX
             {
                 if (selectedIndices.Count == 1)
                 {
+                    // if the currentDirectoryNameToBrowse is empty - use the current working directory
+                    if (currentDirectoryNameToBrowse.Length == 0)
+                        currentDirectoryNameToBrowse = currentWorkingDirectory;
+
                     if (!currentDirectoryNameToBrowse.EndsWith("/"))
                         selectedFile = currentDirectoryNameToBrowse + "/" + listViewFiles.Items[selectedIndices[0]].SubItems[7].Text.ToString();
                     else
@@ -136,7 +140,7 @@ namespace TransferUniFLEX
                 {
                     if (selectedIndices.Contains(index))
                     {
-                        if (allowDirectorySelection || (fileInfo.Value.stat.st_mode & 0x0900) != 0x0900)
+                        if (allowDirectorySelection || (fileInfo.Value.stat.st_mode & Program.isDirMask) != Program.isDirMask)
                             selectedFileInformations.Add(fileInfo.Value.filename, fileInfo.Value);
                     }
                     index++;
@@ -174,7 +178,7 @@ namespace TransferUniFLEX
                 FileInformation fileInfo = (FileInformation)focusedItem.Tag;
                 int mode = fileInfo.stat.st_mode;
 
-                if ((mode & 0x0900) == 0x0900)          // make sure it is a directory
+                if ((mode & Program.isDirMask) == Program.isDirMask)          // make sure it is a directory
                 {
                     string newpath = "";
 
