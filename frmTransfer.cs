@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -96,49 +95,49 @@ namespace TransferUniFLEX
             return ccitt;
         }
 
-        private SerialPort OpenComPort()
-        {
-            string portName = comboBoxCOMPorts.Text;
+        //private SerialPort OpenComPort()
+        //{
+        //    string portName = comboBoxCOMPorts.Text;
 
-            // if there is an open serial port - close it in case the selected port has changed
-            if (Program.remoteAccess.serialPort != null && Program.remoteAccess.serialPort.IsOpen)
-            {
-                Program.remoteAccess.serialPort.Close();
-            }
+        //    // if there is an open serial port - close it in case the selected port has changed
+        //    if (Program.remoteAccess.serialPort != null && Program.remoteAccess.serialPort.IsOpen)
+        //    {
+        //        Program.remoteAccess.serialPort.Close();
+        //    }
 
-            // now open the one specified in the comboBoxCOMPorts.Text combo box
-            try
-            {
-                Program.remoteAccess.serialPort = new SerialPort(portName);
+        //    // now open the one specified in the comboBoxCOMPorts.Text combo box
+        //    try
+        //    {
+        //        Program.remoteAccess.serialPort = new SerialPort(portName);
 
-                // Optional: Configure other SerialPort settings such as BaudRate, Parity, DataBits, StopBits, etc.
+        //        // Optional: Configure other SerialPort settings such as BaudRate, Parity, DataBits, StopBits, etc.
 
-                string stringBaudRate = comboBoxBaudRate.Text;
-                int baudRate = 2400;
+        //        string stringBaudRate = comboBoxBaudRate.Text;
+        //        int baudRate = 2400;
 
-                bool success = Int32.TryParse(stringBaudRate, out baudRate);
+        //        bool success = Int32.TryParse(stringBaudRate, out baudRate);
 
-                //serialPort.BaudRate = baudRate;
-                Program.remoteAccess.serialPort.BaudRate = baudRate;
-                Program.remoteAccess.serialPort.Parity = Parity.None;
-                Program.remoteAccess.serialPort.DataBits = 8;
-                Program.remoteAccess.serialPort.StopBits = StopBits.One;
-                Program.remoteAccess.serialPort.ReadTimeout = 5000;      // set timeout to 5 seconds
+        //        //serialPort.BaudRate = baudRate;
+        //        Program.remoteAccess.serialPort.BaudRate = baudRate;
+        //        Program.remoteAccess.serialPort.Parity = Parity.None;
+        //        Program.remoteAccess.serialPort.DataBits = 8;
+        //        Program.remoteAccess.serialPort.StopBits = StopBits.One;
+        //        Program.remoteAccess.serialPort.ReadTimeout = 5000;      // set timeout to 5 seconds
 
-                Program.remoteAccess.serialPort.Open();
+        //        Program.remoteAccess.serialPort.Open();
 
-                // MsgBox.Show($"COM Port {portName} opened successfully.");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // MsgBox.Show($"Access to COM Port {portName} is unauthorized: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                // MsgBox.Show($"An error occurred: {ex.Message}");
-            }
-            return Program.remoteAccess.serialPort;
-        }
+        //        // MsgBox.Show($"COM Port {portName} opened successfully.");
+        //    }
+        //    catch (UnauthorizedAccessException ex)
+        //    {
+        //        // MsgBox.Show($"Access to COM Port {portName} is unauthorized: {ex.Message}");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // MsgBox.Show($"An error occurred: {ex.Message}");
+        //    }
+        //    return Program.remoteAccess.serialPort;
+        //}
 
         private bool OpenTCPPort(bool forceReOpen = false)
         {
@@ -341,7 +340,10 @@ namespace TransferUniFLEX
                 currentFileProgress.Refresh();                          // Force redraw
                 Application.DoEvents();                                 // let the system update the status bar.
 
-                DateTime remoteFileDateTime = DateTime.Now;
+                DateTime remoteAccessedDateTime = DateTime.Now;
+                DateTime remoteModifiedDateTime = DateTime.Now;
+                DateTime remoteCreatedDateTime  = DateTime.Now;
+
                 using (BinaryWriter writer = new BinaryWriter(File.Open(localFilename, FileMode.Create, FileAccess.Write)))
                 {
                     if (radioButtonCOMPort.Checked)
@@ -507,8 +509,18 @@ namespace TransferUniFLEX
                                         // using the filename as the key to the selectedFileInfos dictionary
 
                                         string justTheFilename = Path.GetFileName(filename);
-                                        FileInformation fileInfo = selectedFileInfos[justTheFilename];
-                                        remoteFileDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                        if (Program.isMinix)
+                                        {
+                                            FileInformation fileInfo = selectedFileInfos[justTheFilename];
+                                            remoteAccessedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_atime);
+                                            remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                            remoteCreatedDateTime  = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_ctime);
+                                        }
+                                        else
+                                        {
+                                            FileInformation fileInfo = selectedFileInfos[justTheFilename];
+                                            remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                        }
 
                                         break;
                                     }
@@ -541,9 +553,9 @@ namespace TransferUniFLEX
                 // put remote file datetime on the copy
                 if (!error)
                 {
-                    File.SetLastWriteTime(localFilename, remoteFileDateTime);
-                    File.SetCreationTime(localFilename, remoteFileDateTime);
-                    File.SetLastAccessTime(localFilename, remoteFileDateTime);
+                    File.SetLastWriteTime(localFilename, remoteModifiedDateTime);
+                    File.SetCreationTime(localFilename, remoteModifiedDateTime);
+                    File.SetLastAccessTime(localFilename, remoteModifiedDateTime);
                 }
                 else
                 {
@@ -1059,7 +1071,7 @@ namespace TransferUniFLEX
             bool proceed = true;
             if (radioButtonCOMPort.Checked)
             { 
-                OpenComPort();
+                Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
             }
             else if (radioButtonTCPIP.Checked)
             {
@@ -1078,7 +1090,8 @@ namespace TransferUniFLEX
                 else
                 {
                     // selectedFileInfos will contain the list of files to receive. If it is empty, use the name in textboxUniFLEXFileName.Text
-                    if (selectedFileInfos.Count == 1)
+                    int selectedCount = selectedFileInfos.Count;
+                    if (selectedCount == 1)
                     {
                          string fileToGet = localFilename;
 
@@ -1133,7 +1146,9 @@ namespace TransferUniFLEX
             else
             {
                 // see if we are receiving multiple files
-                if (selectedFileInfos.Count > 0 && radioButtonReceive.Checked)
+                int selectedCount = selectedFileInfos.Count;
+
+                if (selectedCount > 0 && radioButtonReceive.Checked)
                 {
                     buttonStart.Enabled = true;
                     startToolStripMenuItem.Enabled = true;
@@ -1257,7 +1272,7 @@ namespace TransferUniFLEX
             }
             else
             {
-                OpenComPort();
+                Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
                 if (Program.remoteAccess.serialPort != null)
                 {
                     try
@@ -1360,9 +1375,15 @@ namespace TransferUniFLEX
                 comboBoxCOMPorts.Text = comPort;
                 comboBoxBaudRate.Text = baudRate;
                 if (method == "COM")
+                {
                     radioButtonCOMPort.Checked = true;
+                    Program.currentSelectedTransport = (int)SELECTED_TRANSPORT.RS232;
+                }
                 else if (method == "TCP")
+                {
                     radioButtonTCPIP.Checked = true;
+                    Program.currentSelectedTransport = (int)SELECTED_TRANSPORT.TCPIP;
+                }
 
                 textBoxIPAddress.Text = iPAddress;
                 textBoxPort.Text = port;
@@ -1595,7 +1616,9 @@ namespace TransferUniFLEX
             }
             else
             {
-                if (selectedFileInfos.Count > 1)
+                int selectedCount = selectedFileInfos.Count;
+
+                if (selectedCount > 1)
                 {
                     DialogResult result = DialogResult.Yes;      // default to yes in case warnings are off
                     if (!checkBoxWarningsOff.Checked)
@@ -1605,6 +1628,7 @@ namespace TransferUniFLEX
                     if (result == DialogResult.Yes)
                     {
                         // we are going to request multiple files specified in the selectedFileInfos list
+
                         foreach (KeyValuePair<string, FileInformation> fileInfo in selectedFileInfos)
                         {
                             // do all the selected files first
@@ -1620,7 +1644,7 @@ namespace TransferUniFLEX
 
                                 // if the selected file count is > 1, the contents of textBoxUniFLEXFileName is a directory path
                                 if (textBoxUniFLEXFileName.Text.Length > 0 && selectedFileInfos.Count > 1)
-                                    remoteFilename = Path.Combine(textBoxUniFLEXFileName.Text, fileInfo.Key).Replace (@"\", "/");
+                                    remoteFilename = Path.Combine(textBoxUniFLEXFileName.Text, fileInfo.Key).Replace(@"\", "/");
 
                                 bool success = Transfer(localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), false, false);
 
@@ -1645,7 +1669,6 @@ namespace TransferUniFLEX
                                 Program.remoteAccess.GetRemoteDirectory(currentDirectoryBrowsing, checkBoxRecursive.Checked);
                             }
                         }
-
                         //// now do the directories - maybe recursively
                         //foreach (KeyValuePair<string, FileInformation> fileInfo in selectedFileInfos)
                         //{
@@ -1799,7 +1822,7 @@ namespace TransferUniFLEX
         // this button is used to clear the UniFLEX filename text box if Send is selected. If Receive a file
         // is selected, this button becomes the Browse button into the UniFLEX file system
 
-        //Dictionary<string, FileInformation> allFileInfos      = new Dictionary<string, FileInformation>();
+        Dictionary<string, FileInformation> allFileInfos      = new Dictionary<string, FileInformation>();
         Dictionary<string, FileInformation> selectedFileInfos = new Dictionary<string, FileInformation>();
 
         // this is also the handler for the button when its label is 'Browse"
@@ -1818,8 +1841,9 @@ namespace TransferUniFLEX
                 frmUniFLEXBrowse dlg = null;
                 if (radioButtonCOMPort.Checked)
                 {
-                    OpenComPort();
+                    Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
                     dlg = new frmUniFLEXBrowse(Program.remoteAccess.serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
+
                     dlg.currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
                 }
                 else
@@ -1853,7 +1877,18 @@ namespace TransferUniFLEX
                                 // if the single file selected is a directory - add the filename to the current path
                                 string selectedFile = dlg.selectedFile;
                                 string selectedFileInfosFilename = Path.GetFileName(selectedFile);
-                                if (selectedFileInfos[selectedFileInfosFilename].isDirectory)
+                                
+                                bool isDirectory = selectedFileInfos[selectedFileInfosFilename].isDirectory;
+                                if (Program.isMinix)
+                                {
+                                    labelUniFLEXFileName.Text = "Minix Directory";
+                                }
+                                else
+                                {
+                                    labelUniFLEXFileName.Text = "UniFLEX Directory";
+                                }
+
+                                if (isDirectory)
                                 {
                                     textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
 
@@ -1995,7 +2030,14 @@ namespace TransferUniFLEX
                 buttonBrowseLocalFileName.Enabled = false;
                 textBoxLocalFileName.Enabled = false;
                 checkBoxRecursive.Enabled = true;
-                if (selectedFileInfos.Count == 0)
+
+                int selectedCount = 0;
+                if (Program.isMinix)
+                    selectedCount = selectedFileInfos.Count;
+                else
+                    selectedCount = selectedFileInfos.Count;
+
+                if (selectedCount == 0)
                     textBoxDirectoryReplaceString.Text = textBoxLocalDirName.Text;
             }
             else
@@ -2022,7 +2064,13 @@ namespace TransferUniFLEX
             }
             else
             {
-                if (selectedFileInfos.Count == 0)
+                int selectedCount = 0;
+                if (Program.isMinix)
+                    selectedCount = selectedFileInfos.Count;
+                else
+                    selectedCount = selectedFileInfos.Count;
+
+                if (selectedCount == 0)
                 {
                     buttonStart.Enabled = false;
                     startToolStripMenuItem.Enabled = false;
@@ -2041,6 +2089,7 @@ namespace TransferUniFLEX
             SetStartButtonStatus();
 
             registryKey.SetValue("COM Port", comboBoxCOMPorts.Text);
+            Program.remoteAccess.comboBoxCOMPorts = comboBoxCOMPorts.Text;
         }
 
         private void comboBoxCOMPorts_DropDown(object sender, EventArgs e)
@@ -2063,6 +2112,7 @@ namespace TransferUniFLEX
         private void comboBoxBaudRate_SelectedIndexChanged(object sender, EventArgs e)
         {
             registryKey.SetValue("Baud Rate", comboBoxBaudRate.Text);
+            Program.remoteAccess.comboBoxBaudRate = comboBoxBaudRate.Text;
         }
 
         private void HandleDirectionChanged ()
@@ -2076,6 +2126,7 @@ namespace TransferUniFLEX
                 textBoxDirectoryReplaceString.Visible = true;
 
                 buttonClearUniFLEXFilename.Text = "Clear";
+                Program.currentDirectionIsSending = true;
             }
             else
             {
@@ -2090,6 +2141,7 @@ namespace TransferUniFLEX
                 textBoxDirectoryReplaceString.Visible = false;
 
                 buttonClearUniFLEXFilename.Text = "Browse";
+                Program.currentDirectionIsSending = false;
             }
         }
 
@@ -2185,6 +2237,7 @@ namespace TransferUniFLEX
             {
                 groupBoxCOMPort.Visible = true;
                 groupBoxTCPIP.Visible = false;
+                Program.currentSelectedTransport = (int)SELECTED_TRANSPORT.RS232;
 
                 registryKey.SetValue("Method", "COM");
             }
@@ -2196,6 +2249,7 @@ namespace TransferUniFLEX
             {
                 groupBoxCOMPort.Visible = false;
                 groupBoxTCPIP.Visible = true;
+                Program.currentSelectedTransport = (int)SELECTED_TRANSPORT.TCPIP;
 
                 registryKey.SetValue("Method", "TCP");
             }
