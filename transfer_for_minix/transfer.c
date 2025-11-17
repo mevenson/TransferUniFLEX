@@ -441,7 +441,7 @@ char *filename;
       printf("sending statBuffer\n");
       
     statPtr = (char*)&statBuffer;
-    write_fdTTY(statPtr, 24);
+    write_fdTTY(statPtr, sizeof(statBuffer));
 
     /* now send the filename - there will always be a null byte */
     if (verbose == 1)
@@ -619,15 +619,23 @@ void sendDirectory ()
                       }
                   }
               }
-              if (verbose == 1) printf("telling remote to stop requesting filenames\n");
-              /* when we are done - send a statBuffer with all zeros and and a blank filename */
+              if (verbose == 1)
+				printf("telling remote to stop requesting filenames\n");
+				
+              /* when we are done - send a statBuffer with all zeros */
+              /* and a blank filename */
+              
               statBuffer.st_dev = 0;
               statBuffer.st_ino = 0;
               statBuffer.st_mode = 0;
               statBuffer.st_nlink = 0;
               statBuffer.st_uid = 0;
+              statBuffer.st_gid = 0;
+              statBuffer.st_rdev = 0;
               statBuffer.st_size = 0;
+              statBuffer.st_atime = 0;
               statBuffer.st_mtime = 0;
+              statBuffer.st_ctime = 0;
               for (i = 0; i < 16; i++)
                   filename[i] = 0x00;
               sendFileInfo(filename); /* will wait for the request */
@@ -643,7 +651,8 @@ void sendDirectory ()
   }
   else
   {
-      /* not a valid dieectory - now send the ACK - tells remote to start requesting filenames */
+      /* not a valid directory - now send the ACK - */
+      /* tells remote to start requesting filenames */
       if (verbose == 1)
           printf("sending ACK to tell remote it is OK to start requesting filenames\n");
       write_fdTTY(ackBuffer, 1);  /* ACK the directory name */
@@ -656,8 +665,12 @@ void sendDirectory ()
       statBuffer.st_mode = 0;
       statBuffer.st_nlink = 0;
       statBuffer.st_uid = 0;
+      statBuffer.st_gid = 0;
+      statBuffer.st_rdev = 0;
       statBuffer.st_size = 0;
+      statBuffer.st_atime = 0;
       statBuffer.st_mtime = 0;
+      statBuffer.st_ctime = 0;
       for (i = 0; i < 16; i++)
           filename[i] = 0x00;
       sendFileInfo(filename); /* will wait for the request */
@@ -869,6 +882,8 @@ char **argv;
   
   /* send a notice to commPort to make sure server knows we are minix */
   /* write_fdTTY("minix", 5); */
+
+  printf ("size of stat buffer = %d\n", sizeof(statBuffer));
   
   while (1)
   {
