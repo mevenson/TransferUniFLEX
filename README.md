@@ -25,3 +25,5 @@
   Foe more information consult the Help file "TransferUniFLEX_-_transfer.chm"
 
 <img width="2544" height="1392" alt="image" src="https://github.com/user-attachments/assets/059e3766-a4f0-4ecb-891e-03065bf5bbee" />
+
+This is a screen shot of my Windows 10 machine running three instances of TransferUniFLEX. The one on the lower left is connected to the PT68K-2 COM1 port through the PC COM3 port at 19200 baud. The top middle one is connected to the Kees UniFLEX machine via TCPIP on address 10.0.0.128 port 1410. And lastly, the bottom right instance is connected to the PT68K-4 COM1 port through the PC COM9 port at 19200 baud.
