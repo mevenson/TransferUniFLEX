@@ -86,6 +86,9 @@ namespace TransferUniFLEX
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
             this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
             this.checkBoxMinix = new System.Windows.Forms.CheckBox();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBoxDirection.SuspendLayout();
             this.currentFileProgress.SuspendLayout();
             this.groupBoxOperatorEntertainment.SuspendLayout();
@@ -448,6 +451,7 @@ namespace TransferUniFLEX
             // 
             this.menuStripMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
+            this.editToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menuStripMain.Location = new System.Drawing.Point(0, 0);
             this.menuStripMain.Name = "menuStripMain";
@@ -475,57 +479,57 @@ namespace TransferUniFLEX
             // startToolStripMenuItem
             // 
             this.startToolStripMenuItem.Name = "startToolStripMenuItem";
-            this.startToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.startToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.startToolStripMenuItem.Text = "&Start";
             this.startToolStripMenuItem.Click += new System.EventHandler(this.startToolStripMenuItem_Click);
             // 
             // pauseToolStripMenuItem
             // 
             this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
-            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.pauseToolStripMenuItem.Text = "&Pause";
             this.pauseToolStripMenuItem.Click += new System.EventHandler(this.pauseToolStripMenuItem_Click);
             // 
             // stopToolStripMenuItem
             // 
             this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
-            this.stopToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.stopToolStripMenuItem.Text = "S&top";
             this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(168, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
             // 
             // getABlockDevieToolStripMenuItem
             // 
             this.getABlockDevieToolStripMenuItem.Name = "getABlockDevieToolStripMenuItem";
-            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.getABlockDevieToolStripMenuItem.Text = "Get a Block Device";
             this.getABlockDevieToolStripMenuItem.Click += new System.EventHandler(this.getABlockDevieToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(168, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
             // 
             // forceRemoteExitToolStripMenuItem
             // 
             this.forceRemoteExitToolStripMenuItem.Name = "forceRemoteExitToolStripMenuItem";
-            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.forceRemoteExitToolStripMenuItem.Text = "&Force Remote Exit";
             this.forceRemoteExitToolStripMenuItem.Click += new System.EventHandler(this.forceRemoteExitToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(168, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(177, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "&Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -651,6 +655,29 @@ namespace TransferUniFLEX
             this.checkBoxMinix.UseVisualStyleBackColor = true;
             this.checkBoxMinix.CheckedChanged += new System.EventHandler(this.checkBoxMinix_CheckedChanged);
             // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.optionsToolStripMenuItem,
+            this.editorToolStripMenuItem});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "&Edit";
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.optionsToolStripMenuItem.Text = "&Options";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
+            // 
+            // editorToolStripMenuItem
+            // 
+            this.editorToolStripMenuItem.Name = "editorToolStripMenuItem";
+            this.editorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editorToolStripMenuItem.Text = "&Editor";
+            this.editorToolStripMenuItem.Click += new System.EventHandler(this.editorToolStripMenuItem_Click);
+            // 
             // frmTransfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -771,6 +798,9 @@ namespace TransferUniFLEX
         private System.Windows.Forms.Button buttonForceRemoteExit;
         private System.Windows.Forms.CheckBox checkBoxKeepZeroLengthFiles;
         private System.Windows.Forms.CheckBox checkBoxMinix;
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editorToolStripMenuItem;
     }
 }
 

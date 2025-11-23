@@ -41,6 +41,7 @@ namespace TransferUniFLEX
             this.buttonOK = new System.Windows.Forms.Button();
             this.buttonCancel = new System.Windows.Forms.Button();
             this.labelNotice = new System.Windows.Forms.Label();
+            this.labelCurrentWorkingDirectory = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // listViewFiles
@@ -134,11 +135,20 @@ namespace TransferUniFLEX
             // labelNotice
             // 
             this.labelNotice.AutoSize = true;
-            this.labelNotice.Location = new System.Drawing.Point(38, 22);
+            this.labelNotice.Location = new System.Drawing.Point(12, 23);
             this.labelNotice.Name = "labelNotice";
             this.labelNotice.Size = new System.Drawing.Size(200, 13);
             this.labelNotice.TabIndex = 3;
             this.labelNotice.Text = "Directories cannot be selected - only files";
+            // 
+            // labelCurrentWorkingDirectory
+            // 
+            this.labelCurrentWorkingDirectory.AutoSize = true;
+            this.labelCurrentWorkingDirectory.Location = new System.Drawing.Point(12, 384);
+            this.labelCurrentWorkingDirectory.Name = "labelCurrentWorkingDirectory";
+            this.labelCurrentWorkingDirectory.Size = new System.Drawing.Size(129, 13);
+            this.labelCurrentWorkingDirectory.TabIndex = 4;
+            this.labelCurrentWorkingDirectory.Text = "current working directory: ";
             // 
             // frmUniFLEXBrowse
             // 
@@ -146,6 +156,7 @@ namespace TransferUniFLEX
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonCancel;
             this.ClientSize = new System.Drawing.Size(575, 419);
+            this.Controls.Add(this.labelCurrentWorkingDirectory);
             this.Controls.Add(this.labelNotice);
             this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonOK);
@@ -176,5 +187,6 @@ namespace TransferUniFLEX
         private System.Windows.Forms.Button buttonOK;
         private System.Windows.Forms.Button buttonCancel;
         private System.Windows.Forms.Label labelNotice;
+        private System.Windows.Forms.Label labelCurrentWorkingDirectory;
     }
 }

@@ -21,6 +21,10 @@ namespace TransferUniFLEX
         string _version = Program.version.ToString();
         RegistryKey registryKey = null;
 
+        private string dialogConfigType = "TransferUbiFLEX";
+        private string editor = "";
+        private bool useExternalEditor = false;
+
         public frmTransfer()
         {
             InitializeComponent();
@@ -302,8 +306,13 @@ namespace TransferUniFLEX
             return response;
         }
 
-        private bool SendFileNameAndRecieveFile (SerialPort serialPort, string localFilename, string filename, int mode)
+        // we are going to make this function public so that the Browse dialog can use it to view a file
+        public bool SendFileNameAndRecieveFile (SerialPort serialPort, string localFilename, string filename, int mode)
         {
+            // mode is currently not used - always 0. I am not sure why it is here, but it isn't hurting
+            // anything so - just leave it alone for now. Maybe we can use it know that we are being
+            // called from the browse dialog and we should run silent!
+
             bool error = false;
             int response = 0;
 
@@ -329,15 +338,20 @@ namespace TransferUniFLEX
                 }
             }
 
+            // the directory either already existed or we were able to creat it - so proceed
             if (directoryOK)
             {
+                // entertain the operator
                 currentFileProgress.Text = Path.GetFileName(localFilename);       // show the local filename as the control's text
 
-                // show the activity as the item.
-                currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
-                statusLabel.Text = $" {filename} ->  {localFilename}";  // format the string
-                currentFileProgress.Items.Add(statusLabel);             // add the item
-                currentFileProgress.Refresh();                          // Force redraw
+                if (statusLabel != null)
+                {
+                    // show the activity as the item.
+                    currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+                    statusLabel.Text = $" {filename} ->  {localFilename}";  // format the string
+                    currentFileProgress.Items.Add(statusLabel);             // add the item
+                    currentFileProgress.Refresh();                          // Force redraw
+                }
                 Application.DoEvents();                                 // let the system update the status bar.
 
                 DateTime remoteAccessedDateTime = DateTime.Now;
@@ -508,18 +522,25 @@ namespace TransferUniFLEX
                                         // now get the original file time stamp from the selectedFileInfos for this file
                                         // using the filename as the key to the selectedFileInfos dictionary
 
-                                        string justTheFilename = Path.GetFileName(filename);
-                                        if (Program.isMinix)
+                                        // if there are no entries in selectedFileInfo, this means we were call from the Browse dialog
+                                        // because it does not populate the selectedFileInfo dictionary. But this is Ok becasue we are
+                                        // getting the file to temparoray space so we can display it, so there is no need to set the 
+                                        // date and time of the file to what it is on the remote.
+                                        if (selectedFileInfos.Count > 0)
                                         {
-                                            FileInformation fileInfo = selectedFileInfos[justTheFilename];
-                                            remoteAccessedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_atime);
-                                            remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
-                                            remoteCreatedDateTime  = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_ctime);
-                                        }
-                                        else
-                                        {
-                                            FileInformation fileInfo = selectedFileInfos[justTheFilename];
-                                            remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                            string justTheFilename = Path.GetFileName(filename);
+                                            if (Program.isMinix)
+                                            {
+                                                FileInformation fileInfo = selectedFileInfos[justTheFilename];
+                                                remoteAccessedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_atime);
+                                                remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                                remoteCreatedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_ctime);
+                                            }
+                                            else
+                                            {
+                                                FileInformation fileInfo = selectedFileInfos[justTheFilename];
+                                                remoteModifiedDateTime = Program.remoteAccess.UNIXtoDateTime(fileInfo.stat.st_mtime);
+                                            }
                                         }
 
                                         break;
@@ -528,6 +549,7 @@ namespace TransferUniFLEX
                                     {
                                         // we should never get here
                                         MsgBox.Show("what are we doing here");
+                                        break;
                                     }
                                 }
                                 else
@@ -564,10 +586,13 @@ namespace TransferUniFLEX
                 }
             }
 
-            currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
-            statusLabel.Text = "Idle";                              // format the string
-            currentFileProgress.Items.Add(statusLabel);             // add the item
-            currentFileProgress.Refresh();                          // Force redraw
+            if (statusLabel != null)
+            {
+                currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+                statusLabel.Text = "Idle";                              // format the string
+                currentFileProgress.Items.Add(statusLabel);             // add the item
+                currentFileProgress.Refresh();                          // Force redraw
+            }
             Application.DoEvents();                                 // let the system update the status bar.
 
             return error;
@@ -607,14 +632,14 @@ namespace TransferUniFLEX
             currentFileProgress.Text = Path.GetFileName(localFilename);
             currentFileProgress.Items.Clear();
 
-            // Create and add a ToolStripStatusLabel programmatically
+            //// Create and add a ToolStripStatusLabel programmatically
 
-            ToolStripStatusLabel statusLabel = new ToolStripStatusLabel(Path.GetFileName(localFilename) + " -> " + fileNameAtRemote);
-            currentFileProgress.Items.Add(statusLabel);
+            //ToolStripStatusLabel statusLabel = new ToolStripStatusLabel(Path.GetFileName(localFilename) + " -> " + fileNameAtRemote);
+            //currentFileProgress.Items.Add(statusLabel);
 
-            // Create and add a ToolStripProgressBar programmatically
+            //// Create and add a ToolStripProgressBar programmatically
 
-            ToolStripProgressBar progressBar = new ToolStripProgressBar();
+            //ToolStripProgressBar progressBar = new ToolStripProgressBar();
 
             FileInfo fi = new FileInfo(localFilename);
             long sizeOfLocalFile = fi.Length;
@@ -1412,6 +1437,20 @@ namespace TransferUniFLEX
 
             checkBoxMinix.Checked = Properties.Settings.Default.isMinix;
 
+            // Create and add a ToolStripStatusLabel programmatically
+
+            ToolStripStatusLabel statusLabel = new ToolStripStatusLabel("Idle");
+            currentFileProgress.Items.Add(statusLabel);
+
+            // Create and add a ToolStripProgressBar programmatically
+
+            ToolStripProgressBar progressBar = new ToolStripProgressBar();
+
+            currentFileProgress.Items.Clear();                      // make sure there is only ever one item in the status line
+            statusLabel.Text = "Idle";                              // format the string
+            currentFileProgress.Items.Add(statusLabel);             // add the item
+            currentFileProgress.Refresh();                          // Force redraw
+
             ShowVersionInTitle(null);
         }
 
@@ -1841,8 +1880,9 @@ namespace TransferUniFLEX
                 frmUniFLEXBrowse dlg = null;
                 if (radioButtonCOMPort.Checked)
                 {
+                    //Program.remoteAccess.serialPort = Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
                     Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
-                    dlg = new frmUniFLEXBrowse(Program.remoteAccess.serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
+                    dlg = new frmUniFLEXBrowse(this, Program.remoteAccess.serialPort, textBoxUniFLEXFileName.Text, selectedFileInfos, checkBoxAllowDirectorySelection.Checked);
 
                     dlg.currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
                 }
@@ -1850,7 +1890,7 @@ namespace TransferUniFLEX
                 {
                     if (OpenTCPPort())
                     {
-                        dlg = new frmUniFLEXBrowse(Program.remoteAccess.socket, textBoxUniFLEXFileName.Text, selectedFileInfos, textBoxIPAddress.Text, textBoxPort.Text, checkBoxAllowDirectorySelection.Checked);
+                        dlg = new frmUniFLEXBrowse(this, Program.remoteAccess.socket, textBoxUniFLEXFileName.Text, selectedFileInfos, textBoxIPAddress.Text, textBoxPort.Text, checkBoxAllowDirectorySelection.Checked);
                         dlg.currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
                     }
                     else
@@ -1866,6 +1906,14 @@ namespace TransferUniFLEX
                 {
                     if (dlg.currentWorkingDirectory != "")      // GetCurrentWorkingDirectory will return an empty directory name if none found
                     {
+                        // GetCurrentWorkingDirectory closes the com port - should fix. but for now just make sure it is open
+                        // in case we are called from the Browse dialog
+                        bool portWasOpen = Program.remoteAccess.serialPort == null ? false : true;
+                        if (!portWasOpen)
+                        {
+                            Program.remoteAccess.serialPort = Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
+                        }
+
                         DialogResult result = dlg.ShowDialog();
                         if (result == DialogResult.OK)
                         {
@@ -1963,6 +2011,15 @@ namespace TransferUniFLEX
 
                                 // Browser control has already filled in our selectd file information dictionary weeding out the directories and
                                 // only populating it with the files selected. So there is nothing more to do here
+                            }
+                        }
+
+                        if (!portWasOpen)
+                        {
+                            if (Program.remoteAccess.serialPort != null)
+                            {
+                                Program.remoteAccess.serialPort.Close();
+                                Program.remoteAccess.serialPort = null;
                             }
                         }
                     }
@@ -2449,6 +2506,36 @@ namespace TransferUniFLEX
 
                 Properties.Settings.Default.isMinix = false;
                 Properties.Settings.Default.Save();
+            }
+        }
+
+        private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmDialogOptions dlg = new frmDialogOptions();
+            dlg.ShowDialog();
+        }
+
+        private void editorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            editor = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "EditorPath", "");
+            useExternalEditor = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "UseExternalEditor", "N") == "Y" ? true : false;
+
+            frmDialogGetEditor pDlg = new frmDialogGetEditor();
+            pDlg.editor = editor;
+            pDlg.useExternalEditor = useExternalEditor;
+
+            DialogResult dr = pDlg.ShowDialog();
+            if (dr == DialogResult.OK)
+            {
+                editor = pDlg.editor;
+
+                if (pDlg.useExternalEditor)
+                    useExternalEditor = true;
+                else
+                    useExternalEditor = false;
+
+                Program.SaveConfigurationAttribute("Global/TransferUniFLEX", "EditorPath", editor);
+                Program.SaveConfigurationAttribute("Global/TransferUniFLEX", "UseExternalEditor", useExternalEditor ? "Y" : "N");
             }
         }
     }

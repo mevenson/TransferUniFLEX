@@ -263,7 +263,7 @@ namespace TransferUniFLEX
                                     int sizeOfStatBuffer = 24;
                                     FileInformation fileInfo = new FileInformation();
 
-                                    byte[] filename = new byte[15];     // when you declare a byte array, all elements are set to 0 by default.
+                                    byte[] filename = new byte[17];     // when you declare a byte array, all elements are set to 0 by default.
                                     int fnIndex = 0;
 
                                     // first get the statBuffer - it will be 24 bytes
@@ -509,6 +509,24 @@ namespace TransferUniFLEX
     //                                          // 21 0x15 - next byte after
     //      };
     //          
+    //      #define S_IFMT      0xff00	  /* type of file */
+    //      #define S_IFDIR     0x0900	  /* directory */
+    //      #define S_IFCHR     0x0500	  /* character special */
+    //      #define S_IFBLK     0x0300	  /* block special */
+    //      #define S_IFREG     0x0100	  /* regular */
+    //      #define S_ISUID     0x40	  /* set user id on execution */
+    //      #define S_IREAD     0x01	  /* read permission, owner */
+    //      #define S_IWRITE    0x02	  /* write permission, owner */
+    //      #define S_IEXEC     0x04	  /* execute/search permission, owner */
+    //      #define S_IOREAD    0x08	  /* others read */
+    //      #define S_IOWRITE   0x10	  /* others write */
+    //      #define S_IOEXEC    0x20	  /* others execute */
+    //      #define S_IPRM      0xff	  /* mask for permission bits */
+    //      /*#define S_IFMPC 0030000*/   /* multiplexed char special */
+    //      /*#define S_IFMPB 0070000*/   /* multiplexed block special */
+    //      /*#define S_ISGID 0002000*/   /* set group id on execution */
+    //      /*#define S_ISVTX 0001000*/   /* save swapped text even after use */
+
     //      minix (30 bytes)
     //      struct stat {
     //          short int       st_dev     ;    // 00 0x00 - device number (first byte = major, second byte = minor)
@@ -525,7 +543,7 @@ namespace TransferUniFLEX
     //                                          // 30 0x1E - next byte after
     //      };
 
-    //      /* Some common definitions. */
+    //      /* Some common definitions. (in octal) */
     //      #define S_IFMT  0170000		/* type of file */
     //      #define S_IFDIR 0040000  	/* directory */
     //      #define S_IFCHR 0020000		/* character special */

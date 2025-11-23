@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using System.Windows.Forms;
+using System.IO;
+using System.Xml;
 
 using System.Net.Sockets;
 using System.IO.Ports;
@@ -25,6 +27,20 @@ namespace TransferUniFLEX
         public static ushort isDirMask = 0x0900;
         public static bool currentDirectionIsSending = false;
         public static int currentSelectedTransport;
+
+        public static string configFileName = "configuration.xml";
+        static bool isDebugBuild = false;
+
+        public static bool IsDebugBuild()
+        {
+#if DEBUG
+            isDebugBuild = true;
+            return true;
+#else
+            isDebugBuild = false;
+            return false;
+#endif
+        }
 
         public static SerialPort OpenComPort(string comboBoxCOMPorts, string comboBoxBaudRate)
         {
@@ -95,12 +111,344 @@ namespace TransferUniFLEX
         [STAThread]
         static void Main()
         {
+            if (!File.Exists(configFileName))
+            {
+                string defaults = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <Global>
+    <TransferUniFLEX EditorPath="""" UseExternalEditor=""N"" LogOS9FloppyWrites=""N"" os9FloppyWritesFile="""">
+    </TransferUniFLEX>
+  </Global>
+</configuration>";
+
+                // create a default config file if one does not already exist.
+
+                using (StreamWriter cf = new StreamWriter(File.Open(configFileName, FileMode.Create, FileAccess.ReadWrite)))
+                {
+                    cf.WriteLine(defaults);
+                }
+            }
+
             version = Assembly.GetEntryAssembly().GetName().Version;
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new frmTransfer());
         }
+
+        #region COnfiguration File Access Routines
+        public static void SaveConfigurationAttribute(string xpath, string attribute, string value)
+        {
+            XmlReader reader = null;
+            FileStream xmlDocStream = null;
+
+            try
+            {
+                xmlDocStream = File.OpenRead(Program.configFileName);
+                reader = XmlReader.Create(xmlDocStream);
+            }
+            catch
+            {
+                File.Create(Program.configFileName);
+                try
+                {
+                    xmlDocStream = File.OpenRead(Program.configFileName);
+                    reader = XmlReader.Create(xmlDocStream);
+                }
+                catch (Exception e)
+                {
+                    MsgBox.Show($"Unable to open the configuration file: {e.Message}");
+                }
+            }
+
+            XmlDocument newDoc = null;
+
+            if (reader != null)
+            {
+                XmlDocument doc = new XmlDocument();
+                if (doc != null)
+                {
+                    doc.Load(reader);
+
+                    Program.SaveConfigurationAttribute(doc, xpath, attribute, value);
+
+                    newDoc = (XmlDocument)doc.Clone();
+                }
+                reader.Close();
+                reader.Dispose();
+
+                xmlDocStream.Close();
+
+                newDoc.Save(Program.configFileName);
+            }
+        }
+
+        public static void SaveConfigurationAttribute(XmlDocument doc, string xpath, string attribute, string value)
+        {
+            XmlNode configurationNode = doc.SelectSingleNode("/configuration");
+            XmlNode node = configurationNode.SelectSingleNode(xpath);
+            if (node != null)
+            {
+                XmlAttributeCollection coll = node.Attributes;
+                if (coll != null)
+                {
+                    XmlNode valueNode = coll.GetNamedItem(attribute);
+
+                    if (valueNode != null)
+                    {
+                        if (value != valueNode.Value)
+                            valueNode.Value = value;
+                    }
+                    else
+                    {
+                        XmlAttribute attr = doc.CreateAttribute(attribute);
+                        attr.Value = value;
+                        node.Attributes.Append(attr);
+                    }
+                }
+            }
+            else
+            {
+                // need to add this xpath node to the keyboard map
+
+                string[] uriParts = xpath.Split('/');
+                string name = uriParts[uriParts.Length - 1];
+
+                XmlNode finalNode = configurationNode;
+                XmlNode previousNode = finalNode;
+                for (int i = 0; i < uriParts.Length - 1; i++)
+                {
+                    finalNode = finalNode.SelectSingleNode(uriParts[i]);
+                    if (finalNode == null)
+                    {
+                        XmlNode newNode = doc.CreateNode(XmlNodeType.Element, uriParts[i], "");
+                        previousNode.AppendChild(newNode);
+
+                        finalNode = previousNode.SelectSingleNode(uriParts[i]);
+                    }
+                    previousNode = finalNode;
+                }
+
+                if (finalNode != null)
+                {
+                    XmlNode newNode = doc.CreateNode(XmlNodeType.Element, name, "");
+                    XmlAttribute attr = doc.CreateAttribute(attribute);
+                    attr.Value = value;
+
+                    newNode.Attributes.Append(attr);
+                    finalNode.AppendChild(newNode);
+                }
+            }
+        }
+
+        public static string GetConfigurationAttribute(string xpath, string attribute, string defaultvalue)
+        {
+            string value = defaultvalue;
+
+            try
+            {
+                FileStream xmlDocStream = File.OpenRead(configFileName);
+                XmlReader reader = XmlReader.Create(xmlDocStream);
+
+                if (reader != null)
+                {
+                    XmlDocument doc = new XmlDocument();
+                    if (doc != null)
+                    {
+                        doc.Load(reader);
+
+                        XmlNode configurationNode = doc.SelectSingleNode("/configuration");
+                        XmlNode node = configurationNode.SelectSingleNode(xpath);
+                        if (node != null)
+                        {
+                            XmlAttributeCollection coll = node.Attributes;
+                            if (coll != null)
+                            {
+                                XmlNode valueNode = coll.GetNamedItem(attribute);
+
+                                if (valueNode != null)
+                                    value = valueNode.Value;
+                            }
+                        }
+                    }
+                    reader.Close();
+                }
+                xmlDocStream.Close();
+            }
+            catch
+            {
+
+            }
+            return value;
+        }
+
+        // Modified to allow numbers to be specified as eothe decimal or hex if preceeded with "0x" or "0X"
+        public static int GetConfigurationAttribute(string xpath, string attribute, int defaultvalue)
+        {
+            int value = defaultvalue;
+
+            FileStream xmlDocStream = File.OpenRead(configFileName);
+            XmlReader reader = XmlReader.Create(xmlDocStream);
+
+            if (reader != null)
+            {
+                XmlDocument doc = new XmlDocument();
+                if (doc != null)
+                {
+                    doc.Load(reader);
+
+                    XmlNode configurationNode = doc.SelectSingleNode("/configuration");
+                    XmlNode node = configurationNode.SelectSingleNode(xpath);
+                    if (node != null)
+                    {
+                        XmlAttributeCollection coll = node.Attributes;
+                        if (coll != null)
+                        {
+                            XmlNode valueNode = coll.GetNamedItem(attribute);
+                            if (valueNode != null)
+                            {
+                                string strvalue = valueNode.Value;
+                                if (strvalue.StartsWith("0x") || strvalue.StartsWith("0X"))
+                                {
+                                    value = Convert.ToInt32(strvalue, 16);
+                                }
+                                else
+                                    Int32.TryParse(strvalue, out value);
+                            }
+                        }
+                    }
+                }
+                reader.Close();
+            }
+            xmlDocStream.Close();
+            return value;
+        }
+
+        public static string GetConfigurationAttribute(string xpath, string attribute, string ordinal, string defaultvalue)
+        {
+            string value = defaultvalue;
+            bool foundOrdinal = false;
+
+            FileStream xmlDocStream = File.OpenRead(configFileName);
+            XmlReader reader = XmlReader.Create(xmlDocStream);
+
+            if (reader != null)
+            {
+                XmlDocument doc = new XmlDocument();
+                if (doc != null)
+                {
+                    doc.Load(reader);
+
+                    XmlNode configurationNode = doc.SelectSingleNode("/configuration");
+                    XmlNode node = configurationNode.SelectSingleNode(xpath);
+                    while (!foundOrdinal && node != null)
+                    {
+                        if (node != null)
+                        {
+                            XmlAttributeCollection coll = node.Attributes;
+                            if (coll != null)
+                            {
+                                foreach (XmlAttribute a in coll)
+                                {
+                                    if (a.Name == "ID")
+                                    {
+                                        string index = a.Value;
+                                        if (index == ordinal)
+                                        {
+                                            XmlNode valueNode = coll.GetNamedItem(attribute);
+
+                                            if (valueNode != null)
+                                            {
+                                                value = valueNode.Value;
+                                                foundOrdinal = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (!foundOrdinal)
+                                node = node.NextSibling;
+                        }
+                    }
+                }
+                reader.Close();
+            }
+            xmlDocStream.Close();
+            return value;
+        }
+        public static int GetConfigurationAttribute(string xpath, string attribute, string ordinal, int defaultvalue)
+        {
+            int value = defaultvalue;
+            bool foundOrdinal = false;
+
+            FileStream xmlDocStream = File.OpenRead(configFileName);
+            XmlReader reader = XmlReader.Create(xmlDocStream);
+
+            if (reader != null)
+            {
+                XmlDocument doc = new XmlDocument();
+                if (doc != null)
+                {
+                    doc.Load(reader);
+
+                    XmlNode configurationNode = doc.SelectSingleNode("/configuration");
+                    XmlNode node = configurationNode.SelectSingleNode(xpath);
+                    while (!foundOrdinal && node != null)
+                    {
+                        XmlAttributeCollection coll = node.Attributes;
+                        if (coll != null)
+                        {
+                            foreach (XmlAttribute a in coll)
+                            {
+                                if (a.Name == "ID")
+                                {
+                                    string index = a.Value;
+                                    if (index == ordinal)
+                                    {
+                                        XmlNode valueNode = coll.GetNamedItem(attribute);
+
+                                        if (valueNode != null)
+                                        {
+                                            string strvalue = valueNode.Value;
+                                            if (strvalue.StartsWith("0x") || strvalue.StartsWith("0X"))
+                                            {
+                                                value = Convert.ToInt32(strvalue, 16);
+                                            }
+                                            else
+                                                Int32.TryParse(strvalue, out value);
+                                            foundOrdinal = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (!foundOrdinal)
+                            node = node.NextSibling;
+                    }
+                }
+                reader.Close();
+            }
+            xmlDocStream.Close();
+            return value;
+        }
+        public static int GetConfigurationAttributeHex(string xpath, string attribute, string ordinal, int defaultValue)
+        {
+            int value = defaultValue;
+
+            try
+            {
+                string strValue = GetConfigurationAttribute(xpath, attribute, ordinal, defaultValue.ToString("X4"));
+                value = Convert.ToUInt16(strValue, 16);
+            }
+            catch
+            {
+            }
+
+            return value;
+        }
+        #endregion
     }
 
     public static class Constants

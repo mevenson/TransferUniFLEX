@@ -2,16 +2,20 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Linq;
+using System.IO;
 using System.IO.Ports;
 using System.Text;
 
 using System.Net;
 using System.Net.Sockets;
 
+using System.Diagnostics;
+
 namespace TransferUniFLEX
 {
     public partial class frmUniFLEXBrowse : Form
     {
+        private frmTransfer _parent;
 
         public  Dictionary<string, FileInformation> selectedFileInformations           = new Dictionary<string, FileInformation> ();  // this is what is used by the caller to know  what is selected
         private Dictionary<string, FileInformation> previouslySelectedFileInformations = new Dictionary<string, FileInformation>();   // this is what is already selected when called
@@ -21,6 +25,23 @@ namespace TransferUniFLEX
         bool allowDirectorySelection = false;
         public string currentWorkingDirectory = "";
 
+        private bool m_nExpandTabs = true;
+        private bool m_nAddLinefeed = false;
+        private bool m_nCompactBinary = true;
+        private bool m_nStripLinefeed = true;
+        private bool m_nCompressSpaces = true;
+        private bool m_nConvertLfOnly = false;
+        private bool m_nConvertLfOnlyToCrLf = false;
+        private bool m_nConvertLfOnlyToCr = true;
+        private bool disableTextProcessingDuringExport = false;
+
+        private string dialogConfigType = "TransferUniFLEX";
+        private string editor = "";
+        private bool useExternalEditor = false;
+        private bool useInternalEditorTabbedInterface = false;
+        private bool logOS9FloppyWrite = false;
+        private string os9FloppyWritesFile = "";
+
         public void SetTitle ()
         {
             if (Program.isMinix)
@@ -29,9 +50,10 @@ namespace TransferUniFLEX
                 this.Text = "Browse UniFLEX directory";
         }
 
-        public frmUniFLEXBrowse(Socket _socket, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, string _ipAddress, string _port, bool _allowDirectorySelection)
+        public frmUniFLEXBrowse(frmTransfer parent, Socket _socket, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, string _ipAddress, string _port, bool _allowDirectorySelection)
         {
             InitializeComponent();
+            _parent = parent;
 
             SetTitle();
 
@@ -46,9 +68,10 @@ namespace TransferUniFLEX
             Program.remoteAccess.GetRemoteDirectory(directoryNameToBrowse, false);      // handle recursion at the main form level
         }
 
-        public frmUniFLEXBrowse(SerialPort _serialPort, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, bool _allowDirectorySelection)
+        public frmUniFLEXBrowse(frmTransfer parent, SerialPort _serialPort, string directoryNameToBrowse, Dictionary<string, FileInformation> _selectedFileInfos, bool _allowDirectorySelection)
         {
             InitializeComponent();
+            _parent = parent;
 
             SetTitle();
 
@@ -159,6 +182,12 @@ namespace TransferUniFLEX
                     }
                 }
             }
+
+            // on initial entry, currentDirectoryNameToBrowse will be blank, so use currentWorkingDirectory
+            string cwd = currentDirectoryNameToBrowse;
+            if (cwd.Length == 0)
+                cwd = currentWorkingDirectory;
+            labelCurrentWorkingDirectory.Text = $"current working directory: {cwd}";
         }
 
         private void frmUniFLEXBrowse_Load(object sender, EventArgs e)
@@ -166,7 +195,9 @@ namespace TransferUniFLEX
             // load up the total list of sorted file inforations returned by /bin/pwd (getcwd)
             // the disctionary is sorted first by mode (dir .vs. file) and then alphabetically
 
-            labelNotice.Text = allowDirectorySelection ? "Directories may be selected" : "Directories cannot be selected - only files";
+            labelNotice.Text = allowDirectorySelection ?
+                            "Directories may be selected - double click on a directory to change directory - double click a file to open it": 
+                            "Directories cannot be selected - double click on a directory to change directory - double click a file to open it";
             LoadListView();
         }
 
@@ -211,10 +242,40 @@ namespace TransferUniFLEX
             selectedFile = "";
         }
 
+        private void ReloadOptions()
+        {
+            // reload options from config file in case they were saved (with Apply) in the Option Dialog and them the user pressed cancel.
+
+            m_nExpandTabs = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileExport/ExpandTabs", "enabled", "0") == "1" ? true : false;
+            m_nAddLinefeed = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileExport/AddLinefeed", "enabled", "0") == "1" ? true : false;
+            m_nCompactBinary = Program.GetConfigurationAttribute("Global/TransferUniFLEX/BinaryFile/CompactBinary", "enabled", "0") == "1" ? true : false;
+            m_nStripLinefeed = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileImport/StripLinefeed", "enabled", "0") == "1" ? true : false;
+            m_nCompressSpaces = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileImport/CompressSpaces", "enabled", "0") == "1" ? true : false;
+
+            m_nConvertLfOnly = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileImport/ConvertLfOnly", "enabled", "0") == "1" ? true : false;
+            if (m_nConvertLfOnly)
+            {
+                m_nConvertLfOnlyToCrLf = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileImport/ConvertLfOnlyToCrLf", "enabled", "0") == "1" ? true : false;
+                m_nConvertLfOnlyToCr = Program.GetConfigurationAttribute("Global/TransferUniFLEX/FileImport/ConvertLfOnlyToCr", "enabled", "0") == "1" ? true : false;
+            }
+            else
+            {
+                m_nConvertLfOnlyToCrLf = false;
+                m_nConvertLfOnlyToCr = false;
+            }
+
+            editor = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "EditorPath", "");
+            useExternalEditor = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "UseExternalEditor", "N") == "Y" ? true : false;
+            useInternalEditorTabbedInterface = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "useInternalEditorTabbedInterface", "N") == "Y" ? true : false;
+            logOS9FloppyWrite = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "LogOS9FloppyWrites", "N") == "Y" ? true : false;
+            os9FloppyWritesFile = Program.GetConfigurationAttribute("Global/TransferUniFLEX", "os9FloppyWritesFile", "");
+        }
+
         private void listViewFiles_DoubleClick(object sender, EventArgs e)
         {
             //return; // STILL needs work
 
+            ReloadOptions();
             Cursor = Cursors.WaitCursor;
 
             if (currentDirectoryNameToBrowse.Length == 0)
@@ -225,6 +286,7 @@ namespace TransferUniFLEX
             if (currentDirectoryNameToBrowse.StartsWith("/"))
             {
                 // when the user double clicks an item that is a directory - do a change directory
+                // when the user double clicks an item that is a not a dir - get the file to the temp directory and display it.
                 //
                 //  if the directory name is .. - just remove the string after the last / in directoryNameToBrowse
 
@@ -280,6 +342,49 @@ namespace TransferUniFLEX
 
                         currentDirectoryNameToBrowse = newpath;
                     }
+                    else
+                    {
+                        // the user clicked on an item in the list view that is NOT a directory. build the nameof
+                        // the file to request from the remote.
+
+                        bool error = false;
+                        string filename = Path.Combine(currentDirectoryNameToBrowse, fileInfo.filename).Replace(@"\", "/");
+
+                        // use the SendFileNameAndRecieveFile code in the main form to do the transfer:
+                        //
+                        //      error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
+                        //
+                        string localDirectory;
+                        if (Program.isMinix)
+                            localDirectory = "D:/FilesFromMinix";
+                        else
+                            localDirectory = "D:/FilesFromUniFLEX";
+                        string localFilename = localDirectory + currentDirectoryNameToBrowse + "/" + fileInfo.filename;
+                        error = _parent.SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename, filename, 0);
+
+                        // if there is no error when retreiving the file from the remote - present the file to the user in their favorite editor.
+                        // for now we will use EmEditor.
+
+                        if (useExternalEditor)
+                        {
+                            Process rc;
+
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = editor;
+                            startInfo.Arguments = localFilename;
+
+                            try
+                            {
+                                rc = Process.Start(startInfo);
+                            }
+                            catch
+                            {
+                                MsgBox.Show("could not load requested editor");
+                            }
+                        }
+                        else
+                            MsgBox.Show("internal editor is not yet implemented");
+                    }
                 }
                 else
                 {
@@ -330,8 +435,51 @@ namespace TransferUniFLEX
 
                         currentDirectoryNameToBrowse = newpath;
                     }
-                }
+                    else
+                    {
+                        // the user clicked on an item in the list view that is NOT a directory. build the nameof
+                        // the file to request from the remote.
 
+                        bool error = false;
+                        string filename = Path.Combine(currentDirectoryNameToBrowse, fileInfo.filename).Replace(@"\", "/");
+
+                        // use the SendFileNameAndRecieveFile code in the main form to do the transfer:
+                        //
+                        //      error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
+                        //
+                        string localDirectory;
+                        if (Program.isMinix)
+                            localDirectory = "D:/FilesFromMinix";
+                        else
+                            localDirectory = "D:/FilesFromUniFLEX";
+
+                        string localFilename = localDirectory + currentDirectoryNameToBrowse + "/" + fileInfo.filename;
+                        error = _parent.SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename, filename, 0);
+
+                        // if there is no error when retreiving the file from the remote - prsent the file to the user in their favorite editor.
+                        // for now we will use EmEditor.
+
+                        if (useExternalEditor)
+                        {
+                            Process rc;
+
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = editor;
+                            startInfo.Arguments = localFilename;
+
+                            try
+                            {
+                                rc = Process.Start(startInfo);
+                            }
+                            catch
+                            {
+                                MsgBox.Show("could not load requested editor");
+                            }
+                        }
+                        else
+                            MsgBox.Show("internal editor is not yet implemented");
+                    }
+                }
                 Program.remoteAccess.GetRemoteDirectory(currentDirectoryNameToBrowse, false);      // handle recursion at the main form level);
                 LoadListView();
             }
