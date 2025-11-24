@@ -94,7 +94,20 @@ namespace TransferUniFLEX
                     if (serialPort != null && serialPort.IsOpen)
                     {
                         serialPort.Write(byteToSend, 0, 1);
-                        response = serialPort.ReadByte();
+
+                        int retryCount = 10;
+                        while (retryCount > 0)
+                        {
+                            try
+                            {
+                                response = serialPort.ReadByte();
+                                retryCount = 0;
+                            }
+                            catch (TimeoutException ex)
+                            {
+                                --retryCount;
+                            }
+                        }
                     }
                     else
                     {
