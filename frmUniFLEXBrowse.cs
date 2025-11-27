@@ -383,7 +383,11 @@ namespace TransferUniFLEX
                             }
                         }
                         else
-                            MsgBox.Show("internal editor is not yet implemented");
+                        {
+                            frmFileEditor pDlg = new frmFileEditor(dialogConfigType, localFilename, fileInfo.filename);
+                            pDlg.pDlgInvoker = this;
+                            pDlg.Show(this.Parent);
+                        }
                     }
                 }
                 else
@@ -477,7 +481,11 @@ namespace TransferUniFLEX
                             }
                         }
                         else
-                            MsgBox.Show("internal editor is not yet implemented");
+                        {
+                            frmFileEditor pDlg = new frmFileEditor(dialogConfigType, localFilename, fileInfo.filename);
+                            pDlg.pDlgInvoker = this;
+                            pDlg.Show(this.Parent);
+                        }
                     }
                 }
                 Program.remoteAccess.GetRemoteDirectory(currentDirectoryNameToBrowse, false);      // handle recursion at the main form level);

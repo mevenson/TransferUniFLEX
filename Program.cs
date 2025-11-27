@@ -1,11 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml;
 
+using Microsoft.Win32;
+
 using System.Net.Sockets;
 using System.IO.Ports;
+
+using System.Runtime.InteropServices;
+
+using System.Drawing;
+using System.Drawing.Text;
 
 namespace TransferUniFLEX
 {
@@ -17,6 +25,11 @@ namespace TransferUniFLEX
 
     static class Program
     {
+        static public Form mainForm = null;
+
+        private static OSPlatform _platform;
+        public static OSPlatform Platform { get => _platform; set => _platform = value; }
+
         public static Version version = new Version();
 
         // this will be used for access to the remote from all forms that need it.
@@ -30,6 +43,162 @@ namespace TransferUniFLEX
 
         public static string configFileName = "configuration.xml";
         static bool isDebugBuild = false;
+
+        static public Dictionary<string, System.Drawing.FontFamily> fontFamilies = new Dictionary<string, System.Drawing.FontFamily>();
+
+        // ------------ Added to support internal editor --------------------------------------------------------
+
+        // Added to support the font selection dialog we borrowed from 680xAssembler which seems to work for linux.
+        public const string defaultFontFamilyName = "Consolas";
+        public const float defaultFontSize = 8.0F;
+        static public string selectedFontFamily = defaultFontFamilyName;
+        static public float selectedFontSize = defaultFontSize;
+        static public string outputFontFamily = defaultFontFamilyName;
+        static public float outputFontSize = defaultFontSize;
+
+        static public string programKeyName = @"SOFTWARE\EvensonConsultingServices\TransferUniFLEX";
+        static public RegistryKey programKey;
+
+        static public string preferencesKeyName = string.Format(@"{0}\{1}", programKeyName, "Preferences");
+        static public RegistryKey preferencesKey;
+
+        public static void GetOSPlatform()
+        {
+            OSPlatform osPlatform = OSPlatform.Create("Other Platform");
+            // Check if it's windows 
+            bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            osPlatform = isWindows ? OSPlatform.Windows : osPlatform;
+            // Check if it's osx 
+            bool isOSX = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+            osPlatform = isOSX ? OSPlatform.OSX : osPlatform;
+            // Check if it's Linux 
+            bool isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            osPlatform = isLinux ? OSPlatform.Linux : osPlatform;
+            Platform = osPlatform;
+        }
+
+        // Function to check if a font is monospaced
+        static bool IsMonospaced(FontFamily fontFamily)
+        {
+            // You can use different criteria to determine if a font is monospaced.
+            // For example, you can compare the widths of specific characters.
+
+            bool isMonoSpaced = false;
+            try
+            {
+                // Here, we'll check if the width of the letter 'i' is the same as 'w'.
+                using (Font font = new Font(fontFamily, 12))
+                {
+                    float widthOfI = MeasureStringWidth(font, "i");
+                    float widthOfW = MeasureStringWidth(font, "w");
+
+                    // If the widths are equal, it's likely a monospaced font.
+                    isMonoSpaced = widthOfI == widthOfW;
+                }
+            }
+            catch (Exception e)
+            {
+                string message = e.Message;
+            }
+
+            return isMonoSpaced;
+        }
+
+        // Function to measure the width of a string using a given font
+        static float MeasureStringWidth(Font font, string text)
+        {
+            using (Graphics graphics = Graphics.FromImage(new Bitmap(1, 1)))
+            {
+                return graphics.MeasureString(text, font).Width;
+            }
+        }
+
+        static private void GetFonts()
+        {
+            InstalledFontCollection installedFonts = new InstalledFontCollection();
+
+            fontFamilies.Clear();
+
+            fontFamilies.Add("<None Specified>", null);
+            foreach (System.Drawing.FontFamily fontFamily in installedFonts.Families)
+            {
+                if (!fontFamilies.ContainsKey(fontFamily.Name))
+                {
+                    if (IsMonospaced(fontFamily))
+                    {
+                        fontFamilies.Add(fontFamily.Name, fontFamily);
+                    }
+                }
+            }
+        }
+
+        static void LoadFontFromRegistry()
+        {
+            GetFonts();
+
+            // start out by setting the program variables from the registry, then kick off the main form.
+
+            try
+            {
+                programKey = Registry.CurrentUser.OpenSubKey(programKeyName, true);
+                if (programKey == null)
+                    programKey = Registry.CurrentUser.CreateSubKey(programKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
+                preferencesKey = Registry.CurrentUser.OpenSubKey(preferencesKeyName, true);
+                if (preferencesKey == null)
+                    preferencesKey = Registry.CurrentUser.CreateSubKey(preferencesKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
+                // if the registry key does not exist leave the default
+
+                string sourceFontSizeString = defaultFontSize.ToString();
+                string outputFontSizeString = defaultFontSize.ToString();
+
+                // the current rule is: if the registry has an entry for the source font family and/or size - use it. If not set the source
+                // font family to the default font family of Courier New and the source font size to 9.75F. Then if the output windows font
+                // family and/of size is specified in the registry - use it. If not set it the same as the source. 
+
+                if (Program.preferencesKey.GetValue("Source Font Family") != null) selectedFontFamily = (string)Program.preferencesKey.GetValue("Source Font Family");
+                if (Program.preferencesKey.GetValue("Source Font Size") != null) sourceFontSizeString = (string)Program.preferencesKey.GetValue("Source Font Size");
+                if (Program.preferencesKey.GetValue("Output Font Family") != null) outputFontFamily = (string)Program.preferencesKey.GetValue("Output Font Family"); else outputFontFamily = selectedFontFamily;
+                if (Program.preferencesKey.GetValue("Output Font Family") != null) outputFontSizeString = (string)Program.preferencesKey.GetValue("Output Font Size"); else outputFontSizeString = sourceFontSizeString;
+
+                if (sourceFontSizeString.Length > 0)
+                {
+                    float size = defaultFontSize;     // this is the default
+                    bool success = float.TryParse(sourceFontSizeString, out size);
+                    if (success)
+                    {
+                        //Program.preferencesKey.SetValue("Source Font Size", size.ToString(), RegistryValueKind.String);   // save this for font dialog
+                        Program.selectedFontSize = size;
+                    }
+                    success = float.TryParse(outputFontSizeString, out size);
+                    if (success)
+                    {
+                        //Program.preferencesKey.SetValue("Source Font Size", size.ToString(), RegistryValueKind.String);   // save this for font dialog
+                        Program.outputFontSize = size;
+                    }
+                }
+                else
+                {
+                    //Program.preferencesKey.SetValue("Source Font Size", "", RegistryValueKind.String);
+                    Program.selectedFontSize = 10.0F;
+                }
+
+
+                // if the font family name from the registry does not exist on this machine - make sure it is a valid font by assigning the default
+                //
+                //      EVERYBODY supports Courier New
+
+                if (!fontFamilies.ContainsKey(selectedFontFamily)) selectedFontFamily = defaultFontFamilyName;
+                if (!fontFamilies.ContainsKey(outputFontFamily)) outputFontFamily = defaultFontFamilyName;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(string.Format("Failure attempting to open registry at startup: {0}", e.Message));
+            }
+        }
+
+        // ------------------------------------------------------------------------------------------------------
 
         public static bool IsDebugBuild()
         {
@@ -111,6 +280,11 @@ namespace TransferUniFLEX
         [STAThread]
         static void Main()
         {
+            GetOSPlatform();
+            GetFonts();
+
+            LoadFontFromRegistry();
+
             if (!File.Exists(configFileName))
             {
                 string defaults = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -131,9 +305,19 @@ namespace TransferUniFLEX
 
             version = Assembly.GetEntryAssembly().GetName().Version;
 
+            programKey = Registry.CurrentUser.OpenSubKey(programKeyName, true);
+            if (programKey == null)
+                programKey = Registry.CurrentUser.CreateSubKey(programKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
+            preferencesKey = Registry.CurrentUser.OpenSubKey(preferencesKeyName, true);
+            if (preferencesKey == null)
+                preferencesKey = Registry.CurrentUser.CreateSubKey(preferencesKeyName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new frmTransfer());
+
+            mainForm = new frmTransfer();
+            Application.Run(mainForm);
         }
 
         #region COnfiguration File Access Routines

@@ -66,6 +66,42 @@
     <Compile Include="frmDialogOptions.designer.cs">
       <DependentUpon>frmDialogOptions.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmDialogSelectFont.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDialogSelectFont.Designer.cs">
+      <DependentUpon>frmDialogSelectFont.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmFileEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmFileEditor.designer.cs">
+      <DependentUpon>frmFileEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmFileEditorTabbed.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmFileEditorTabbed.designer.cs">
+      <DependentUpon>frmFileEditorTabbed.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmFind.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmFind.designer.cs">
+      <DependentUpon>frmFind.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmFindDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmFindDialog.designer.cs">
+      <DependentUpon>frmFindDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmGetLineNumber.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmGetLineNumber.Designer.cs">
+      <DependentUpon>frmGetLineNumber.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmTransfer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -88,12 +124,33 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoteAccess.cs" />
+    <Compile Include="RichTextBoxWithTab.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Win32.cs" />
     <EmbeddedResource Include="frmDialogGetEditor.resx">
       <DependentUpon>frmDialogGetEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDialogOptions.resx">
       <DependentUpon>frmDialogOptions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDialogSelectFont.resx">
+      <DependentUpon>frmDialogSelectFont.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmFileEditor.resx">
+      <DependentUpon>frmFileEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmFileEditorTabbed.resx">
+      <DependentUpon>frmFileEditorTabbed.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmFind.resx">
+      <DependentUpon>frmFind.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmFindDialog.resx">
+      <DependentUpon>frmFindDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmGetLineNumber.resx">
+      <DependentUpon>frmGetLineNumber.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmTransfer.resx">
       <DependentUpon>frmTransfer.cs</DependentUpon>
