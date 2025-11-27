@@ -1,21 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <Global>
-    <TransferUniFLEX EditorPath="C:\Program Files\EmEditor\EmEditor.exe" UseExternalEditor="Y" LogOS9FloppyWrites="N" os9FloppyWritesFile="" os9DefaultISA="8" UseSystemDatetimeWhenExportingFiles="N" UseCreatedDateTimeWhenImporting="N" ConvertFileNamesToUpperCaseOnImport="N" UseLastUsedExportDirectory="N" UseLastUsedImportDirectory="N" UseExportOverride="N" UseImportOverride="N" ExportOverrideDirectory="" ImportOverrideDirectory="" DisableTextProcessingDuringExport="N" DisableTextProcessingDuringImport="N">
-      <FileExport>
-        <ExpandTabs enabled="0" />
-        <AddLinefeed enabled="0" />
-      </FileExport>
-      <BinaryFile>
-        <CompactBinary enabled="0" />
-      </BinaryFile>
-      <FileImport>
-        <StripLinefeed enabled="0" />
-        <CompressSpaces enabled="0" />
-        <ConvertLfOnly enabled="0" />
-        <ConvertLfOnlyToCrLf enabled="0" />
-        <ConvertLfOnlyToCr enabled="0" />
-      </FileImport>
+    <TransferUniFLEX EditorPath="" UseExternalEditor="N" LogOS9FloppyWrites="N" os9FloppyWritesFile="">
     </TransferUniFLEX>
   </Global>
 </configuration>
