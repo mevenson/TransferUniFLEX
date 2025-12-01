@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <Global>
-    <TransferUniFLEX EditorPath="" UseExternalEditor="N" LogOS9FloppyWrites="N" os9FloppyWritesFile="">
-    </TransferUniFLEX>
+    <TransferUniFLEX EditorPath="C:\Program Files\EmEditor\EmEditor.exe" UseExternalEditor="N" LogOS9FloppyWrites="N" os9FloppyWritesFile="" />
   </Global>
 </configuration>
