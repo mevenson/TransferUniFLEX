@@ -458,6 +458,10 @@ namespace TransferUniFLEX
                             localDirectory = "D:/FilesFromUniFLEX";
 
                         string localFilename = localDirectory + currentDirectoryNameToBrowse + "/" + fileInfo.filename;
+                        selectedFileInformations.Clear();
+                        selectedFileInformations.Add(fileInfo.filename, fileInfo);
+                        _parent.selectedFileInfos = selectedFileInformations;
+
                         error = _parent.SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename, filename, 0);
 
                         // if there is no error when retreiving the file from the remote - prsent the file to the user in their favorite editor.

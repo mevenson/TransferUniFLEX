@@ -598,7 +598,7 @@ namespace TransferUniFLEX
             return error;
         }
 
-        private bool SendFileNameAndSendFile(SerialPort serialPort, string localFilename, string remoteFilename, bool uniFLEXFilenameIsDirectory, bool isDirectoryTransfer = false)
+        private bool SendFileNameAndSendFile(SerialPort serialPort, string localFilename, string remoteFilename, bool remoteFilenameIsDirectory, bool isDirectoryTransfer = false)
         {
             // sending to UniFLEX
 
@@ -620,7 +620,7 @@ namespace TransferUniFLEX
                 // will be fasle becasue the file name for the remote end is passed in as 'remoteFilename' and set
                 // in fileNameAtRemote.
 
-                if (uniFLEXFilenameIsDirectory)
+                if (remoteFilenameIsDirectory)
                 {
                     // this is a multiple file select transfer - the remoteFilename is really a directory name
                     // so we need to build the true remote filename and set it in fileNameAtRemote..
@@ -670,7 +670,7 @@ namespace TransferUniFLEX
                         // what it needs to do to prepare for receiving the file content, so let's send
                         // it
 
-                        if (checkBoxFixLineFeeds.Checked)
+                        if (checkBoxFixNewLines.Checked)
                             fileContainsOnlyText = FileContainsOnlyText(localFilename);
 
                         using (BinaryReader reader = new BinaryReader(File.Open(localFilename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -708,27 +708,42 @@ namespace TransferUniFLEX
                                         // see if we need to do <CR><LF> or <LF> replace if a text file
 
                                         byte previouscharacter = 0x00;
-                                        if (checkBoxFixLineFeeds.Checked && fileContainsOnlyText)
+                                        if (checkBoxFixNewLines.Checked && fileContainsOnlyText)
                                         {
-                                            for (int i = 0, j = 0; i < buffer.Length; i++)
+                                            if (Program.isMinix)
                                             {
-                                                if (buffer[i] == 0x0a)
+                                                for (int i = 0, j = 0; i < buffer.Length; i++)
                                                 {
-                                                    // strip line feed by replacing with carriage return unless the previous character was a carriage return
-                                                    // in which case, just ignore the line feed.
-
-                                                    if (previouscharacter != 0x0d)
+                                                    // just strip all <CR> from the buffer we are going to send
+                                                    if (buffer[i] != 0x0d)
                                                     {
-                                                        sendBuffer[j++] = 0x0d;
-                                                        previouscharacter = 0x0d;
+                                                        sendBuffer[j++] = buffer[i];
                                                         bytesToSend++;
                                                     }
                                                 }
-                                                else
+                                            }
+                                            else
+                                            {
+                                                for (int i = 0, j = 0; i < buffer.Length; i++)
                                                 {
-                                                    sendBuffer[j++] = buffer[i];
-                                                    previouscharacter = buffer[i];
-                                                    bytesToSend++;
+                                                    if (buffer[i] == 0x0a)
+                                                    {
+                                                        // strip line feed by replacing with carriage return unless the previous character was a carriage return
+                                                        // in which case, just ignore the line feed.
+
+                                                        if (previouscharacter != 0x0d)
+                                                        {
+                                                            sendBuffer[j++] = 0x0d;
+                                                            previouscharacter = 0x0d;
+                                                            bytesToSend++;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        sendBuffer[j++] = buffer[i];
+                                                        previouscharacter = buffer[i];
+                                                        bytesToSend++;
+                                                    }
                                                 }
                                             }
                                         }
@@ -905,7 +920,7 @@ namespace TransferUniFLEX
 
                                 using (BinaryReader reader = new BinaryReader(File.Open(localFilename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                                 {
-                                    if (checkBoxFixLineFeeds.Checked)
+                                    if (checkBoxFixNewLines.Checked)
                                         fileContainsOnlyText = FileContainsOnlyText(localFilename);
 
                                     while (true)    // main loop to send blocks
@@ -946,7 +961,7 @@ namespace TransferUniFLEX
                                                         {
                                                             // see if there are any CR/LF sequences to modify - we will only ever make the number of bytes to send smaller or leave as is - never bigger
                                                             byte previouscharacter = 0x00;
-                                                            if (checkBoxFixLineFeeds.Checked && fileContainsOnlyText)
+                                                            if (checkBoxFixNewLines.Checked && fileContainsOnlyText)
                                                             {
                                                                 for (int i = 0, j = 2; i < bytesRead; i++)
                                                                 {
@@ -1415,9 +1430,9 @@ namespace TransferUniFLEX
 
                 string replaceLineFeeds = (string)registryKey.GetValue("Replace LineFeeds", "N");
                 if (replaceLineFeeds == "Y")
-                    checkBoxFixLineFeeds.Checked = true;
+                    checkBoxFixNewLines.Checked = true;
                 else
-                    checkBoxFixLineFeeds.Checked = false;
+                    checkBoxFixNewLines.Checked = false;
 
                 string wariningsOff = (string)registryKey.GetValue("Warnings Off", "N");
                 if (wariningsOff == "Y")
@@ -1436,6 +1451,12 @@ namespace TransferUniFLEX
             groupBoxTCPIP.Left = groupBoxCOMPort.Left;
 
             checkBoxMinix.Checked = Properties.Settings.Default.isMinix;
+
+            // Not needed - this is taken care of when we set checkBoxMinix.Checked  in the above statement.
+            //
+            //// if Minix is selected at start up change the text
+            //if (checkBoxMinix.Checked)
+            //    checkBoxFixNewLines.Text = "Remove <CR> when Sending Text files";
 
             // Create and add a ToolStripStatusLabel programmatically
 
@@ -1474,7 +1495,7 @@ namespace TransferUniFLEX
                 {
                     //registryKey.SetValue("COM Port", comboBoxCOMPorts.Text);
                     //registryKey.SetValue("Baud Rate", comboBoxBaudRate.Text);
-                    //registryKey.SetValue("Replace LineFeeds", checkBoxFixLineFeeds.Checked ? "Y" : "N");
+                    //registryKey.SetValue("Replace LineFeeds", checkBoxFixNewLines.Checked ? "Y" : "N");
                 }
 
                 // determine if we are doing file transfer(s) or a complete directory transfer
@@ -1497,7 +1518,11 @@ namespace TransferUniFLEX
                         if (!checkBoxWarningsOff.Checked)
                         {
                             // if warnings are NOT turned off - issue warning
-                            r = MsgBox.Show("Transferring multiple files means that the UniFLEX filename is a directory - do you wish to continue?", "Warning", MessageBoxButtons.YesNo);
+                            string os = "UniFLEX";
+                            if (Program.isMinix)
+                                os = "Minix";
+
+                            r = MsgBox.Show($"Transferring multiple files means that the {os} filename is a directory - do you wish to continue?", "Warning", MessageBoxButtons.YesNo);
                         }
                         if (r == DialogResult.Yes)
                         {
@@ -1505,7 +1530,12 @@ namespace TransferUniFLEX
                             {
                                 DialogResult dr = MsgBox.Show(string.Format("The remote current working directory is: {0}", currentWorkingDirectory), "OK to proceed", MessageBoxButtons.YesNo);
                                 if (dr != DialogResult.Yes)
+                                {
+                                    if (textBoxUniFLEXFileName.Text.Length == 0)
+                                        textBoxUniFLEXFileName.Text = currentWorkingDirectory;
+
                                     proceed = false;
+                                }
                             }
                             else
                                 proceed = true;
@@ -1558,7 +1588,7 @@ namespace TransferUniFLEX
                                     //
                                     // false will be returned if we should not proceed
 
-                                    string remoteDirectory = Path.Combine(targetDirectory, filename.Replace(textBoxLocalDirName.Text, ""));
+                                    string remoteDirectory = Path.Combine(targetDirectory, filename.Replace(textBoxLocalDirName.Text + '\\', ""));
                                     remoteDirectory = remoteDirectory.Replace("\\", "/");
                                     remoteDirectory = textBoxUniFLEXFileName.Text + remoteDirectory;
 
@@ -1597,7 +1627,12 @@ namespace TransferUniFLEX
                         DialogResult r = DialogResult.Yes;      // default to yes in case warnings are off
                         if (!checkBoxWarningsOff.Checked)
                         {
-                            r = MsgBox.Show("Transferring multiple files means that the UniFLEX filename is a directory - do you wish to continue?", "Warning", MessageBoxButtons.YesNo);
+                            // if warnings are NOT turned off - issue warning
+                            string os = "UniFLEX";
+                            if (Program.isMinix)
+                                os = "Minix";
+
+                            r = MsgBox.Show($"Transferring multiple files means that the {os} filename is a directory - do you wish to continue?", "Warning", MessageBoxButtons.YesNo);
                         }
                         if (r == DialogResult.Yes)
                         {
@@ -1861,8 +1896,8 @@ namespace TransferUniFLEX
         // this button is used to clear the UniFLEX filename text box if Send is selected. If Receive a file
         // is selected, this button becomes the Browse button into the UniFLEX file system
 
-        Dictionary<string, FileInformation> allFileInfos      = new Dictionary<string, FileInformation>();
-        Dictionary<string, FileInformation> selectedFileInfos = new Dictionary<string, FileInformation>();
+        public Dictionary<string, FileInformation> allFileInfos      = new Dictionary<string, FileInformation>();
+        public Dictionary<string, FileInformation> selectedFileInfos = new Dictionary<string, FileInformation>();
 
         // this is also the handler for the button when its label is 'Browse"
         private void buttonClearUniFLEXFilename_Click(object sender, EventArgs e)
@@ -2177,7 +2212,7 @@ namespace TransferUniFLEX
             if (radioButtonSend.Checked)
             {
                 // enable for Send to UniFLEX
-                checkBoxFixLineFeeds.Visible = true;
+                checkBoxFixNewLines.Visible = true;
                 checkBoxRecursive.Visible = true;
                 checkBoxAllowDirectorySelection.Visible = false;
                 textBoxDirectoryReplaceString.Visible = true;
@@ -2192,7 +2227,7 @@ namespace TransferUniFLEX
                     MsgBox.Show("This is still not working", "Notice", MessageBoxButtons.OK, MessageBoxIcon.None);
                 }
                 // enable for Receive from UniFLEX 
-                checkBoxFixLineFeeds.Visible = false;
+                checkBoxFixNewLines.Visible = false;
                 checkBoxRecursive.Visible = true;      // still testing - not ready to implement recursive receiving from UniFLEX yet in release build
                 checkBoxAllowDirectorySelection.Visible = true;
                 textBoxDirectoryReplaceString.Visible = false;
@@ -2212,9 +2247,9 @@ namespace TransferUniFLEX
             HandleDirectionChanged();
         }
 
-        private void checkBoxFixLineFeeds_CheckedChanged(object sender, EventArgs e)
+        private void checkBoxFixNewLines_CheckedChanged(object sender, EventArgs e)
         {
-            registryKey.SetValue("Replace LineFeeds", checkBoxFixLineFeeds.Checked ? "Y" : "N");
+            registryKey.SetValue("Replace LineFeeds", checkBoxFixNewLines.Checked ? "Y" : "N");
         }
 
         private void checkBoxTopLevelOnly_CheckedChanged(object sender, EventArgs e)
@@ -2490,6 +2525,8 @@ namespace TransferUniFLEX
                 checkBoxAllowDirectorySelection.Enabled = false;
                 Program.isDirMask = 0x4000;
 
+                checkBoxFixNewLines.Text = "Remove <CR> when Sending Text files";
+
                 Properties.Settings.Default.isMinix = true;
                 Properties.Settings.Default.Save();
             }
@@ -2503,6 +2540,8 @@ namespace TransferUniFLEX
                 labelUniFLEXFileName.Text = labelUniFLEXFileName.Text.Replace("Minix", "UniFLEX");
                 checkBoxAllowDirectorySelection.Enabled = true;
                 Program.isDirMask = 0x0900;
+
+                checkBoxFixNewLines.Text = "Replace <CR><LF> and <LF> with <CR> on Send";
 
                 Properties.Settings.Default.isMinix = false;
                 Properties.Settings.Default.Save();
