@@ -2525,6 +2525,8 @@ namespace TransferUniFLEX
                 checkBoxAllowDirectorySelection.Enabled = false;
                 Program.isDirMask = 0x4000;
 
+                buttonForceRemoteExit.Enabled = false;      // the minix transfer program does not support this yet
+
                 checkBoxFixNewLines.Text = "Remove <CR> when Sending Text files";
 
                 Properties.Settings.Default.isMinix = true;
@@ -2540,6 +2542,8 @@ namespace TransferUniFLEX
                 labelUniFLEXFileName.Text = labelUniFLEXFileName.Text.Replace("Minix", "UniFLEX");
                 checkBoxAllowDirectorySelection.Enabled = true;
                 Program.isDirMask = 0x0900;
+
+                buttonForceRemoteExit.Enabled = true;   // the the UniFlex tuff and transfer programs support this
 
                 checkBoxFixNewLines.Text = "Replace <CR><LF> and <LF> with <CR> on Send";
 
