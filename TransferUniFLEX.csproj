@@ -120,6 +120,7 @@
     <Compile Include="frmGetBlockDevice.Designer.cs">
       <DependentUpon>frmGetBlockDevice.cs</DependentUpon>
     </Compile>
+    <Compile Include="ListViewColumnSorter.cs" />
     <Compile Include="MsgBox.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

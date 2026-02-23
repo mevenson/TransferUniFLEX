@@ -40,6 +40,8 @@ namespace TransferUniFLEX
 
         ToolStripStatusLabel statusLabel;
 
+        List<string> tempbuffer = new List<string>();
+
         static ushort[] crc_table = new ushort[]
         {
             0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 
@@ -362,7 +364,9 @@ namespace TransferUniFLEX
                 {
                     if (radioButtonCOMPort.Checked)
                     {
-                        textBoxResponses.Text += $"Retrieving: {filename}";
+                        tempbuffer.Add($"Retrieving: {filename}");
+                        textBoxResponses.Lines = tempbuffer.ToArray();
+                        //textBoxResponses.Text += $"Retrieving: {filename}";
 
                         // make sure the line we just added is visible
                         textBoxResponses.SelectionStart = textBoxResponses.Text.Length;     
@@ -441,7 +445,11 @@ namespace TransferUniFLEX
                                     break;
                             }
                             //}
-                            textBoxResponses.Text += " - done\r\n";
+                            tempbuffer.Add(" - done"); 
+                            textBoxResponses.Lines = tempbuffer.ToArray();
+                            //textBoxResponses.Text += " - done\r\n";
+                            textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                            textBoxResponses.ScrollToCaret();
                         }
                     }
                     else
@@ -799,8 +807,22 @@ namespace TransferUniFLEX
                                                 // show in the operator entertainment area, the byte received from the remote
                                                 // after sending the low byte of the CCITT
 
-                                                string operatorMessage = string.Format("    Block Number: {0} - response: 0x{1}\r\n", blockNumber.ToString("D6"), response.ToString("X2"));
-                                                textBoxResponses.AppendText(operatorMessage);
+                                                string operatorMessage = string.Format("    Block Number: {0} - response: 0x{1}", blockNumber.ToString("D6"), response.ToString("X2"));
+                                                // textBoxResponses.AppendText(operatorMessage);
+
+                                                if (response == 0x06 && tempbuffer.Count > 0)
+                                                {
+                                                    if (!tempbuffer[tempbuffer.Count - 1].StartsWith("Sending"))
+                                                        tempbuffer[tempbuffer.Count - 1] = operatorMessage;
+                                                    else
+                                                        tempbuffer.Add(operatorMessage);
+                                                }
+                                                else
+                                                    tempbuffer.Add(operatorMessage);
+
+                                                textBoxResponses.Lines = tempbuffer.ToArray();
+                                                textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                                                textBoxResponses.ScrollToCaret();
 
                                                 // the response will either be -1 for timeout or 0x06 for ACK or 0x15 for NACK.
 
@@ -1592,7 +1614,11 @@ namespace TransferUniFLEX
                                     remoteDirectory = remoteDirectory.Replace("\\", "/");
                                     remoteDirectory = textBoxUniFLEXFileName.Text + remoteDirectory;
 
-                                    textBoxResponses.AppendText(string.Format("Sending: {0} to {1}\r\n", filename, remoteDirectory));
+                                    tempbuffer.Add(string.Format("Sending: {0} to {1}", filename, remoteDirectory));
+                                    textBoxResponses.Lines = tempbuffer.ToArray();
+                                    //textBoxResponses.AppendText(string.Format("Sending: {0} to {1}\r\n", filename, remoteDirectory));
+                                    textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                                    textBoxResponses.ScrollToCaret();
 
                                     if (Transfer(filename.Replace(@"\", "/"), remoteDirectory.Replace(@"\", "/"), true, true))
                                     {
@@ -1651,8 +1677,13 @@ namespace TransferUniFLEX
                                 {
                                     string remotename = Path.GetFileName(filename).Replace(@"\", "/");
                                     string target = Path.Combine(textBoxUniFLEXFileName.Text, remotename).Replace(@"\", "/");
-                                    string responsesText = string.Format("Sending: {0} to {1}\r\n", filename, target);
-                                    textBoxResponses.AppendText(responsesText);
+                                    string responsesText = string.Format("Sending: {0} to {1}", filename, target);
+
+                                    tempbuffer.Add(responsesText);
+                                    textBoxResponses.Lines = tempbuffer.ToArray();
+                                    //textBoxResponses.AppendText(responsesText);                                    
+                                    textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                                    textBoxResponses.ScrollToCaret();
 
                                     // transfer the file to/from UniFLEX based on which radio button is checked - textBoxUniFLEXFileName is a directory name
                                     //
@@ -1680,7 +1711,11 @@ namespace TransferUniFLEX
                     {
                         // this is a singlr file transfer
 
-                        textBoxResponses.AppendText(string.Format("Sending: {0} to {1}\r\n", textBoxLocalFileName.Text, textBoxUniFLEXFileName.Text));
+                        tempbuffer.Add(string.Format("Sending: {0} to {1}", textBoxLocalFileName.Text, textBoxUniFLEXFileName.Text));
+                        textBoxResponses.Lines = tempbuffer.ToArray();
+                        //textBoxResponses.AppendText(string.Format("Sending: {0} to {1}\r\n", textBoxLocalFileName.Text, textBoxUniFLEXFileName.Text));                        
+                        textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                        textBoxResponses.ScrollToCaret();
 
                         bool success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
                         if (stop)
@@ -1758,7 +1793,21 @@ namespace TransferUniFLEX
                     // we want a single file specified in textboxUniFLEXFileName.Text. We cannot do a single directory download
                     // from the UniFLEX machine since there is no 'stat' information
 
-                    bool success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                    foreach (KeyValuePair<string, FileInformation> fileInfo in selectedFileInfos)
+                    {
+                        if (fileInfo.Value.isDirectory)
+                        {
+                            // the user selected a directory to transfer. Do all the files in this directory. To do this, we
+                            // need to get the list of files in the directory. textBoxUniFLEXFileName.Text will have the
+                            // UniFLEX source directory name
+
+                            MsgBox.Show("directory transfer not yet implemented");
+                        }
+                        else
+                        {
+                            bool success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                        }
+                    }
                 }
             }
             Cursor = Cursors.Default;
@@ -1961,7 +2010,6 @@ namespace TransferUniFLEX
                                 string selectedFile = dlg.selectedFile;
                                 string selectedFileInfosFilename = Path.GetFileName(selectedFile);
                                 
-                                bool isDirectory = selectedFileInfos[selectedFileInfosFilename].isDirectory;
                                 if (Program.isMinix)
                                 {
                                     labelUniFLEXFileName.Text = "Minix Directory";
@@ -1971,61 +2019,69 @@ namespace TransferUniFLEX
                                     labelUniFLEXFileName.Text = "UniFLEX Directory";
                                 }
 
-                                if (isDirectory)
-                                {
-                                    textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
+                                try 
+                                { 
+                                    bool isDirectory = selectedFileInfos[selectedFileInfosFilename].isDirectory;
+                                    if (isDirectory)
+                                    {
+                                        textBoxUniFLEXFileName.Text = textBoxUniFLEXFileName.Text + "/" + selectedFile;
 
-                                    buttonStart.Enabled = true;
-                                    startToolStripMenuItem.Enabled = true;
-                                    if (checkBoxMinix.Checked)
-                                        labelUniFLEXFileName.Text = "Minix Directory";
-                                    else
-                                        labelUniFLEXFileName.Text = "UniFLEX Directory";
+                                        buttonStart.Enabled = true;
+                                        startToolStripMenuItem.Enabled = true;
+                                        if (checkBoxMinix.Checked)
+                                            labelUniFLEXFileName.Text = "Minix Directory";
+                                        else
+                                            labelUniFLEXFileName.Text = "UniFLEX Directory";
 
-                                    // enabale and disable the appropriate text boxes
-                                    textBoxLocalFileName.Enabled = false;
-                                    buttonBrowseLocalFileName.Enabled = false;
-                                    textBoxLocalDirName.Enabled = true;
-                                    buttonBrowseLocalDirectory.Enabled = true;
+                                        // enabale and disable the appropriate text boxes
+                                        textBoxLocalFileName.Enabled = false;
+                                        buttonBrowseLocalFileName.Enabled = false;
+                                        textBoxLocalDirName.Enabled = true;
+                                        buttonBrowseLocalDirectory.Enabled = true;
+                                    }
+                                    else    // single file selected and it is NOT a directory - handle normal
+                                    {       // fill in the textboxes appropriately
+
+                                        string justTheSelectedFileName = Path.GetFileName(selectedFile);
+                                        textBoxUniFLEXFileName.Text = selectedFile;
+
+                                        string justTheLocalDirectoryName = "";
+                                        if (textBoxLocalFileName.Text.Length > 0)
+                                            justTheLocalDirectoryName = Path.GetDirectoryName(textBoxLocalFileName.Text);
+
+                                        if (justTheLocalDirectoryName.Length > 0)
+                                        {
+                                            if (textBoxLocalFileName.Text.EndsWith("/") || textBoxLocalFileName.Text.EndsWith("\\"))
+                                                textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFileInfosFilename;
+                                            else
+                                                textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFileInfosFilename;
+                                        }
+                                        else //textBoxLocalFileName.Text = selectedFileInfosFilename;
+                                        {
+                                            string lastUsedFolder = Properties.Settings.Default.LastUsedFolder;
+                                            if (lastUsedFolder.Length > 0)
+                                                textBoxLocalFileName.Text = Path.Combine(lastUsedFolder, justTheSelectedFileName);
+                                            else
+                                                textBoxLocalFileName.Text = justTheSelectedFileName;
+                                        }
+
+                                        buttonStart.Enabled = true;
+                                        startToolStripMenuItem.Enabled = true;
+                                        if (checkBoxMinix.Checked)
+                                            labelUniFLEXFileName.Text = "Minix File Name";
+                                        else
+                                            labelUniFLEXFileName.Text = "UniFLEX File Name";
+
+                                        // enabale and disable the appropriate text boxes
+                                        textBoxLocalFileName.Enabled = true;
+                                        buttonBrowseLocalFileName.Enabled = true;
+                                        textBoxLocalDirName.Enabled = false;
+                                        buttonBrowseLocalDirectory.Enabled = false;
+                                    }
                                 }
-                                else    // single file selected and it is NOT a directory - handle normal
-                                {       // fill in the textboxes appropriately
-
-                                    string justTheSelectedFileName = Path.GetFileName(selectedFile);
-                                    textBoxUniFLEXFileName.Text = selectedFile;
-
-                                    string justTheLocalDirectoryName = "";
-                                    if (textBoxLocalFileName.Text.Length > 0)
-                                        justTheLocalDirectoryName = Path.GetDirectoryName(textBoxLocalFileName.Text);
-
-                                    if (justTheLocalDirectoryName.Length > 0)
-                                    {
-                                        if (textBoxLocalFileName.Text.EndsWith("/") || textBoxLocalFileName.Text.EndsWith("\\"))
-                                            textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + selectedFileInfosFilename;
-                                        else
-                                            textBoxLocalFileName.Text = textBoxLocalFileName.Text.Replace("\\", "/") + "/" + selectedFileInfosFilename;
-                                    }
-                                    else //textBoxLocalFileName.Text = selectedFileInfosFilename;
-                                    {
-                                        string lastUsedFolder = Properties.Settings.Default.LastUsedFolder;
-                                        if (lastUsedFolder.Length > 0)
-                                            textBoxLocalFileName.Text = Path.Combine(lastUsedFolder, justTheSelectedFileName);
-                                        else
-                                            textBoxLocalFileName.Text = justTheSelectedFileName;
-                                    }
-
-                                    buttonStart.Enabled = true;
-                                    startToolStripMenuItem.Enabled = true;
-                                    if (checkBoxMinix.Checked)
-                                        labelUniFLEXFileName.Text = "Minix File Name";
-                                    else
-                                        labelUniFLEXFileName.Text = "UniFLEX File Name";
-
-                                    // enabale and disable the appropriate text boxes
-                                    textBoxLocalFileName.Enabled = true;
-                                    buttonBrowseLocalFileName.Enabled = true;
-                                    textBoxLocalDirName.Enabled = false;
-                                    buttonBrowseLocalDirectory.Enabled = false;
+                                catch (Exception ex) 
+                                {
+                                    MessageBox.Show(ex.Message);
                                 }
                             }
                             else
@@ -2040,7 +2096,7 @@ namespace TransferUniFLEX
                                 buttonStart.Enabled = true;
                                 startToolStripMenuItem.Enabled = true;
 
-                                textBoxUniFLEXFileName.Text = dlg.currentWorkingDirectory;
+                                textBoxUniFLEXFileName.Text = dlg.currentDirectoryNameToBrowse;
                                 textBoxLocalFileName.Enabled = false; buttonBrowseLocalFileName.Enabled = false;
                                 textBoxLocalDirName.Enabled = true; buttonBrowseLocalDirectory.Enabled = true;
 
@@ -2066,6 +2122,7 @@ namespace TransferUniFLEX
         private void buttonClearResponseWindow_Click(object sender, EventArgs e)
         {
             textBoxResponses.Text = "";
+            tempbuffer.Clear();
         }
         #endregion
         #region text boxes
@@ -2400,7 +2457,11 @@ namespace TransferUniFLEX
                         // device transfer start: 2024/05/11 07:26:07.292
                         // device transfer end:   2024/05/11 07:27:51.306
 
-                        textBoxResponses.AppendText(string.Format("device transfer start: {0}\r\n", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));
+                        tempbuffer.Add(string.Format("device transfer start: {0}", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));
+                        textBoxResponses.Lines = tempbuffer.ToArray();
+                        //textBoxResponses.AppendText(string.Format("device transfer start: {0}\r\n", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));                        
+                        textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                        textBoxResponses.ScrollToCaret();
 
                         // now send the request buffer to the remote and wait for the remote to say it is OK to
                         // start requesting blocks keep doing this until remotes back a packet with size word = 0
@@ -2474,7 +2535,11 @@ namespace TransferUniFLEX
                             error = true;
                         }
 
-                        textBoxResponses.AppendText(string.Format("device transfer end:   {0}\r\n", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));
+                        tempbuffer.Add(string.Format("device transfer end:   {0}", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));
+                        textBoxResponses.Lines = tempbuffer.ToArray();
+                        //textBoxResponses.AppendText(string.Format("device transfer end:   {0}\r\n", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff")));                        
+                        textBoxResponses.SelectionStart = textBoxResponses.Text.Length;
+                        textBoxResponses.ScrollToCaret();
                     }
                 }
             }

@@ -76,7 +76,7 @@ namespace TransferUniFLEX
             comboBoxBaudRate = _comboBoxBaudRate;
         }
 
-        public int SendByte(byte b)
+        public int SendByte(byte b, int readTimeout = 500)
         {
             int response = -1;
             byte[] byteToSend = new byte[1];
@@ -100,6 +100,7 @@ namespace TransferUniFLEX
                         {
                             try
                             {
+                                serialPort.ReadTimeout = 500; // 1/2 second
                                 response = serialPort.ReadByte();
                                 retryCount = 0;
                             }

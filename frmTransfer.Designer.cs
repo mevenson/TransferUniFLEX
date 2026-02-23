@@ -43,7 +43,7 @@ namespace TransferUniFLEX
             this.buttonBrowseLocalDirectory = new System.Windows.Forms.Button();
             this.textBoxLocalDirName = new System.Windows.Forms.TextBox();
             this.labelLocalDirName = new System.Windows.Forms.Label();
-            this.checkBoxFixLineFeeds = new System.Windows.Forms.CheckBox();
+            this.checkBoxFixNewLines = new System.Windows.Forms.CheckBox();
             this.buttonPause = new System.Windows.Forms.Button();
             this.buttonStop = new System.Windows.Forms.Button();
             this.currentFileProgress = new System.Windows.Forms.StatusStrip();
@@ -75,6 +75,9 @@ namespace TransferUniFLEX
             this.forceRemoteExitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBoxCOMPort = new System.Windows.Forms.GroupBox();
             this.groupBoxMethod = new System.Windows.Forms.GroupBox();
@@ -86,9 +89,6 @@ namespace TransferUniFLEX
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
             this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
             this.checkBoxMinix = new System.Windows.Forms.CheckBox();
-            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.editorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBoxDirection.SuspendLayout();
             this.currentFileProgress.SuspendLayout();
             this.groupBoxOperatorEntertainment.SuspendLayout();
@@ -240,16 +240,16 @@ namespace TransferUniFLEX
             this.labelLocalDirName.TabIndex = 12;
             this.labelLocalDirName.Text = "Local Directory Name";
             // 
-            // checkBoxFixLineFeeds
+            // checkBoxFixNewLines
             // 
-            this.checkBoxFixLineFeeds.AutoSize = true;
-            this.checkBoxFixLineFeeds.Location = new System.Drawing.Point(6, 66);
-            this.checkBoxFixLineFeeds.Name = "checkBoxFixLineFeeds";
-            this.checkBoxFixLineFeeds.Size = new System.Drawing.Size(263, 17);
-            this.checkBoxFixLineFeeds.TabIndex = 1;
-            this.checkBoxFixLineFeeds.Text = "Replace <CR><LF> and <LF> with <CR> on Send";
-            this.checkBoxFixLineFeeds.UseVisualStyleBackColor = true;
-            this.checkBoxFixLineFeeds.CheckedChanged += new System.EventHandler(this.checkBoxFixLineFeeds_CheckedChanged);
+            this.checkBoxFixNewLines.AutoSize = true;
+            this.checkBoxFixNewLines.Location = new System.Drawing.Point(6, 66);
+            this.checkBoxFixNewLines.Name = "checkBoxFixNewLines";
+            this.checkBoxFixNewLines.Size = new System.Drawing.Size(263, 17);
+            this.checkBoxFixNewLines.TabIndex = 1;
+            this.checkBoxFixNewLines.Text = "Replace <CR><LF> and <LF> with <CR> on Send";
+            this.checkBoxFixNewLines.UseVisualStyleBackColor = true;
+            this.checkBoxFixNewLines.CheckedChanged += new System.EventHandler(this.checkBoxFixNewLines_CheckedChanged);
             // 
             // buttonPause
             // 
@@ -316,13 +316,17 @@ namespace TransferUniFLEX
             this.comboBoxBaudRate.FormattingEnabled = true;
             this.comboBoxBaudRate.Items.AddRange(new object[] {
             "110",
+            "150",
             "300",
+            "600",
             "1200",
             "2400",
             "4800",
             "9600",
             "19200",
-            "38400"});
+            "38400",
+            "57600",
+            "115200"});
             this.comboBoxBaudRate.Location = new System.Drawing.Point(109, 43);
             this.comboBoxBaudRate.Name = "comboBoxBaudRate";
             this.comboBoxBaudRate.Size = new System.Drawing.Size(59, 21);
@@ -479,59 +483,82 @@ namespace TransferUniFLEX
             // startToolStripMenuItem
             // 
             this.startToolStripMenuItem.Name = "startToolStripMenuItem";
-            this.startToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.startToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.startToolStripMenuItem.Text = "&Start";
             this.startToolStripMenuItem.Click += new System.EventHandler(this.startToolStripMenuItem_Click);
             // 
             // pauseToolStripMenuItem
             // 
             this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
-            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.pauseToolStripMenuItem.Text = "&Pause";
             this.pauseToolStripMenuItem.Click += new System.EventHandler(this.pauseToolStripMenuItem_Click);
             // 
             // stopToolStripMenuItem
             // 
             this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
-            this.stopToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.stopToolStripMenuItem.Text = "S&top";
             this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(168, 6);
             // 
             // getABlockDevieToolStripMenuItem
             // 
             this.getABlockDevieToolStripMenuItem.Name = "getABlockDevieToolStripMenuItem";
-            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.getABlockDevieToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.getABlockDevieToolStripMenuItem.Text = "Get a Block Device";
             this.getABlockDevieToolStripMenuItem.Click += new System.EventHandler(this.getABlockDevieToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(168, 6);
             // 
             // forceRemoteExitToolStripMenuItem
             // 
             this.forceRemoteExitToolStripMenuItem.Name = "forceRemoteExitToolStripMenuItem";
-            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.forceRemoteExitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.forceRemoteExitToolStripMenuItem.Text = "&Force Remote Exit";
             this.forceRemoteExitToolStripMenuItem.Click += new System.EventHandler(this.forceRemoteExitToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(168, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.exitToolStripMenuItem.Text = "&Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.optionsToolStripMenuItem,
+            this.editorToolStripMenuItem});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "&Edit";
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.optionsToolStripMenuItem.Text = "&Options";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
+            // 
+            // editorToolStripMenuItem
+            // 
+            this.editorToolStripMenuItem.Name = "editorToolStripMenuItem";
+            this.editorToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.editorToolStripMenuItem.Text = "&Editor";
+            this.editorToolStripMenuItem.Click += new System.EventHandler(this.editorToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -604,7 +631,7 @@ namespace TransferUniFLEX
             this.groupBoxOptions.Controls.Add(this.checkBoxKeepZeroLengthFiles);
             this.groupBoxOptions.Controls.Add(this.buttonForceRemoteExit);
             this.groupBoxOptions.Controls.Add(this.checkBoxWarningsOff);
-            this.groupBoxOptions.Controls.Add(this.checkBoxFixLineFeeds);
+            this.groupBoxOptions.Controls.Add(this.checkBoxFixNewLines);
             this.groupBoxOptions.Location = new System.Drawing.Point(219, 105);
             this.groupBoxOptions.Name = "groupBoxOptions";
             this.groupBoxOptions.Size = new System.Drawing.Size(279, 89);
@@ -654,29 +681,6 @@ namespace TransferUniFLEX
             this.checkBoxMinix.Text = "Minix";
             this.checkBoxMinix.UseVisualStyleBackColor = true;
             this.checkBoxMinix.CheckedChanged += new System.EventHandler(this.checkBoxMinix_CheckedChanged);
-            // 
-            // editToolStripMenuItem
-            // 
-            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.optionsToolStripMenuItem,
-            this.editorToolStripMenuItem});
-            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-            this.editToolStripMenuItem.Text = "&Edit";
-            // 
-            // optionsToolStripMenuItem
-            // 
-            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.optionsToolStripMenuItem.Text = "&Options";
-            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
-            // 
-            // editorToolStripMenuItem
-            // 
-            this.editorToolStripMenuItem.Name = "editorToolStripMenuItem";
-            this.editorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.editorToolStripMenuItem.Text = "&Editor";
-            this.editorToolStripMenuItem.Click += new System.EventHandler(this.editorToolStripMenuItem_Click);
             // 
             // frmTransfer
             // 
@@ -755,7 +759,7 @@ namespace TransferUniFLEX
         private System.Windows.Forms.Button buttonBrowseLocalDirectory;
         private System.Windows.Forms.TextBox textBoxLocalDirName;
         private System.Windows.Forms.Label labelLocalDirName;
-        private System.Windows.Forms.CheckBox checkBoxFixLineFeeds;
+        private System.Windows.Forms.CheckBox checkBoxFixNewLines;
         private System.Windows.Forms.Button buttonPause;
         private System.Windows.Forms.Button buttonStop;
         private System.Windows.Forms.StatusStrip currentFileProgress;

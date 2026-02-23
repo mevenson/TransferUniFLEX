@@ -15,6 +15,8 @@ namespace TransferUniFLEX
 {
     public partial class frmUniFLEXBrowse : Form
     {
+        private ListViewColumnSorter lvwColumnSorter;
+
         private frmTransfer _parent;
 
         public  Dictionary<string, FileInformation> selectedFileInformations           = new Dictionary<string, FileInformation> ();  // this is what is used by the caller to know  what is selected
@@ -125,6 +127,9 @@ namespace TransferUniFLEX
 
         private void LoadListView ()
         {
+            lvwColumnSorter = new ListViewColumnSorter();
+            this.listViewFiles.ListViewItemSorter = lvwColumnSorter;
+
             listViewFiles.Items.Clear();
             if (Program.isMinix)
             {
@@ -501,6 +506,41 @@ namespace TransferUniFLEX
 
             }
             Cursor = Cursors.Default;
+        }
+
+        private void listViewFiles_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            // this breaks everything - needs work becaude selectFileIndexes in frmTransfer gets screwed up
+            // so for now - just exit the column click event
+
+            return;
+
+            // Determine if clicked column is already the column that is being sorted.
+
+            if (e.Column != 0)      // do not sort on these columns
+            {
+                if (e.Column == lvwColumnSorter.SortColumn)
+                {
+                    // Reverse the current sort direction for this column.
+                    if (lvwColumnSorter.Order == System.Windows.Forms.SortOrder.Ascending)
+                    {
+                        lvwColumnSorter.Order = System.Windows.Forms.SortOrder.Descending;
+                    }
+                    else
+                    {
+                        lvwColumnSorter.Order = System.Windows.Forms.SortOrder.Ascending;
+                    }
+                }
+                else
+                {
+                    // Set the column number that is to be sorted; default to ascending.
+                    lvwColumnSorter.SortColumn = e.Column;
+                    lvwColumnSorter.Order = System.Windows.Forms.SortOrder.Ascending;
+                }
+
+                // Perform the sort with these new sort options.
+                this.listViewFiles.Sort();
+            }
         }
     }
 }
