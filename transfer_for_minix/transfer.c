@@ -12,7 +12,7 @@
 #define SIZEOFDIRNAME   512
 #define MAXPATHLEN      128
 
-#define version "transfer version 0.4:9\n"
+#define version "transfer version 0.4:10\n"
 
 FILE *popen();
 char *getcwd();
@@ -85,6 +85,7 @@ int count;
   BYTE *portadm = (BYTE*)DUART1;
 
   /* if commPort is in DUART 2, set address to DUART2 */
+  
   if (commPort == 3 || commPort == 4)
     portadm = (BYTE*)DUART2;
 
@@ -807,6 +808,52 @@ void sndCurrDir()
     write_fdTTY(byteToSend, 1);
 }
 
+void print_ulong(n) 
+unsigned long n;
+{
+    char buf[12]; /* enough for 32-bit decimal */
+    int i = 0;
+    unsigned long q, r;
+
+    if (n == 0) { putchar('0'); return; }
+
+    while (n != 0) 
+    {
+        q = n / 10;     /* make sure division is done in 32-bit */
+        r = n - q * 10; /* remainder without % */
+        buf[i++] = '0' + r;
+        n = q;
+    }
+
+    while (--i >= 0) putchar(buf[i]);
+}
+
+/*
+    Skips whitespace
+    Stops on first non-digit
+    Avoids undefined behavior
+    No ANSI prototypes
+    No C99 features
+*/
+unsigned long atoul(s)
+char *s;
+{
+    unsigned long v;
+
+    v = 0;
+
+    /* Skip leading spaces */
+    while (*s == ' ' || *s == '\t')
+        s++;
+
+    while (*s >= '0' && *s <= '9') {
+        v = v * 10 + (*s - '0');
+        s++;
+    }
+
+    return v;
+}
+
 /* handle requests (commands) from the client using ttyfd */
 
 void main (argc, argv)
@@ -815,7 +862,12 @@ char **argv;
 {
   int i;
   int j;
+  unsigned long baudRate = 19200;
+  unsigned char brCode = 0xCC;
+  unsigned char *baud;
   char c;
+  
+  commPort = 1;    /* set default in case it is not supplied */
   
   ackBuffer[0] = 0x06; ackBuffer[1] = 0x00;
   nakBuffer[0] = 0x15; nakBuffer[1] = 0x00;
@@ -825,21 +877,36 @@ char **argv;
   /* make sure user specified a port number */
 
   if (argc < 2)
-  {
-    printf("a tty number must be provided\n");
-    exit();
-  }
+    printf("no tty number provided - using tty1\n");
 
-  if (argc == 3)
+  /* start parsing at argv[1] since argv[0] is the program name */
+
+  for (i = 1; i < argc; i++)
   {
     if(
-        (argv[2][0] == '-' || argv[2][0] == '+') &&
-        (argv[2][1] == 'v' || argv[2][1] == 'V')
+        (argv[i][0] == '-' || argv[i][0] == '+') &&
+        (argv[i][1] == 'v' || argv[i][1] == 'V')
       )
     {
       verbose = 1;
     }
+    else if(
+        (argv[i][0] == '-' || argv[i][0] == '+') &&
+        (argv[i][1] == 'b' || argv[i][1] == 'B') &&
+        (argv[i][2] == '=')
+      )
+    {
+      baud = (unsigned char *)(argv[i] + 3);/* point to the numeric value */
+      baudRate = atoul(baud);
+      brCode = setRateCode(baudRate);
+    }
+    else
+    {
+    	/* no dash means this is the comm port */
+        commPort = argv[i][0] & 0x07;	/* only 1 through 4 is valid */
+    }
   }
+  
   printf("verbose is %s\n", verbose == 1 ? "on" : "off");
 
   /* clear out the buffer */
@@ -847,23 +914,25 @@ char **argv;
   for (i = 0; i < SIZEOFBUFFER; i++)
     buffer[i] = 0x00;
 
-  /* build the device name to open and open it */
-  
-  commPort = argv[1][0] & 0x07;	/* only 1 through 4 is valid */
+  /* open the comm port */
   if (commPort > 0 && commPort < 5)
   {
-  	printf ("Setting up COM %d for 19200 baud\n", commPort);
-    initPort (commPort, 0xCC);	/* set up comm port @ 19200 baud */
+    /* printf ("Setting up COM %d for %ld baud\n", commPort, baudRate); */
+    printf("Setting up COM %d for ", commPort);
+    print_ulong(baudRate);
+    printf(" baud\n");
+
+    initPort (commPort, brCode);  /* set up comm port @ correct baud */
   }
   else
   {
-  	printf("Only ports 1 through 4 are valid\n");
-  	exit(1);
+    printf("Only ports 1 through 4 are valid\n");
+    exit(1);
   }
 
   /* we are going to use direct I/O access instead of using the /dev/ttyx */
   /*
-  sprintf(device, "/dev/tty%s", argv[1]);
+  sprintf(device, "/dev/tty%s", commPort);
   fdTTY = open(device, O_RDWR);
   if (fdTTY < 0)
   {
