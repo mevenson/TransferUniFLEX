@@ -33,6 +33,7 @@ namespace TransferUniFLEX
         volatile bool pause = false;
         volatile bool stop = false;
 
+        byte acceptDirectoryName         = 0x01;    // tells the remote to accept a directory name to chdir to
         byte acceptFileName              = 0x02;    // tells the remote to accept a file name to receive and receive it
         byte sendFileCommand             = 0x04;    // tell remote to accept a filename to send and send it
         byte sendCurrentDirectoryCommand = 0x05;    // tell the remote to send us a string containing the current working directory
@@ -212,11 +213,11 @@ namespace TransferUniFLEX
             }
             catch (TimeoutException ex)
             {
-                MsgBox.Show($"Read operation timed out waiting for ack: {ex.Message}");
+                MsgBox.Show($"Read operation timed out waiting for ack: {ex.Message}", "Error", MessageBoxButtons.OK);
             }
             catch (Exception ex)
             {
-                MsgBox.Show($"Read operation failed waiting for ack: {ex.Message}");
+                MsgBox.Show($"Read operation failed waiting for ack: {ex.Message}", "Error", MessageBoxButtons.OK);
             }
 
             return response;
@@ -333,7 +334,7 @@ namespace TransferUniFLEX
                     }
                     catch (Exception ex)
                     {
-                        MsgBox.Show(ex.Message);
+                        MsgBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
                         directoryOK = false;
                         error = true;
                     }
@@ -556,13 +557,13 @@ namespace TransferUniFLEX
                                     else
                                     {
                                         // we should never get here
-                                        MsgBox.Show("what are we doing here");
+                                        MsgBox.Show("what are we doing here", "Error", MessageBoxButtons.OK);
                                         break;
                                     }
                                 }
                                 else
                                 {
-                                    // we should necer get here either
+                                    // we should never get here either
                                     DialogResult r = MsgBox.Show("No response from remote - Abort?", "No Response", MessageBoxButtons.YesNo);
                                     if (r == DialogResult.Yes)
                                     {
@@ -574,7 +575,7 @@ namespace TransferUniFLEX
                         }
                         catch (Exception ex)
                         {
-                            MsgBox.Show(ex.Message);
+                            MsgBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
                             error = true;
                         }
                     }
@@ -889,7 +890,7 @@ namespace TransferUniFLEX
 
                             if (error)
                             {
-                                MsgBox.Show(string.Format("An error has occurred - the file {0} is not correct on the remote end.", fileNameAtRemote));
+                                MsgBox.Show(string.Format("An error has occurred - the file {0} is not correct on the remote end.", fileNameAtRemote), "Error", MessageBoxButtons.OK);
                             }
                             else
                             {
@@ -904,12 +905,12 @@ namespace TransferUniFLEX
                     }
                     else
                     {
-                        MsgBox.Show($"non-ACK response returned after sending filename: {response.ToString("X2")}");
+                        MsgBox.Show($"non-ACK response returned after sending filename: {response.ToString("X2")}", "Error", MessageBoxButtons.OK);
                     }
                 }
                 else
                 {
-                    MsgBox.Show($"non-ACK response returned after sending command: {response.ToString("X2")}");
+                    MsgBox.Show($"non-ACK response returned after sending command: {response.ToString("X2")}", "Error", MessageBoxButtons.OK);
                 }
             }
             else
@@ -1019,7 +1020,7 @@ namespace TransferUniFLEX
                                                         }
                                                         catch (Exception e)
                                                         {
-                                                            MsgBox.Show(e.Message);
+                                                            MsgBox.Show(e.Message, "Error", MessageBoxButtons.OK);
                                                         }
 
                                                         // set how many bytes are to be received
@@ -1051,7 +1052,7 @@ namespace TransferUniFLEX
                                                     }
                                                     catch (Exception e)
                                                     {
-                                                        MsgBox.Show(e.Message);
+                                                        MsgBox.Show(e.Message, "Error", MessageBoxButtons.OK);
                                                         bytesRead = 0;                  // this will get us out of the forever loop
                                                         break;
                                                     }
@@ -1070,19 +1071,19 @@ namespace TransferUniFLEX
                                                         Program.remoteAccess.socket.Receive(responseBuffer);
                                                         if (responseBuffer[0] != 0x06)
                                                         {
-                                                            MsgBox.Show("We need some retry logic here also");
+                                                            MsgBox.Show("We need some retry logic here also", "Error", MessageBoxButtons.OK);
                                                         }
                                                         break;  // we are done
                                                     }
                                                     catch (Exception e)
                                                     {
-                                                        MsgBox.Show(e.Message);
+                                                        MsgBox.Show(e.Message, "Error", MessageBoxButtons.OK);
                                                     }
                                                 }
                                             }
                                             catch (Exception e)
                                             {
-                                                MsgBox.Show(e.Message);
+                                                MsgBox.Show(e.Message, "Error", MessageBoxButtons.OK);
                                             }
                                         }
                                         else
@@ -1099,12 +1100,12 @@ namespace TransferUniFLEX
                     }
                     else
                     {
-                        MsgBox.Show("Unable to connect to remote via TCP/IP");
+                        MsgBox.Show("Unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MsgBox.Show(ex.Message);
+                    MsgBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
                     error = true;
                 }
             }
@@ -1183,7 +1184,7 @@ namespace TransferUniFLEX
             }
             else
             {
-                MsgBox.Show("Unable to connect to remote via TCP/IP");
+                MsgBox.Show("Unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
             }
 
             // all done - close the serial port if we opened it
@@ -1260,17 +1261,17 @@ namespace TransferUniFLEX
             catch (IOException ex)
             {
                 isAvaiable = false;
-                //MsgBox.Show($"COM Port {portName} is in use: {ex.Message}");
+                //MsgBox.Show($"COM Port {portName} is in use: {ex.Message}", "Error", MessageBoxButtons.OK);
             }
             catch (UnauthorizedAccessException ex)
             {
                 isAvaiable = false;
-                // MsgBox.Show($"Access to COM Port {portName} is unauthorized: {ex.Message}");
+                // MsgBox.Show($"Access to COM Port {portName} is unauthorized: {ex.Message}", "Error", MessageBoxButtons.OK);
             }
             catch (Exception ex)
             {
                 isAvaiable = false;
-                // MsgBox.Show($"An error occurred: {ex.Message}");
+                // MsgBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK);
             }
 
             return isAvaiable;
@@ -1297,7 +1298,7 @@ namespace TransferUniFLEX
                         }
                         else
                         {
-                            MsgBox.Show("Unable to connect to remote via TCP/IP");
+                            MsgBox.Show("Unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
                         }
                     }
                     catch
@@ -1316,12 +1317,12 @@ namespace TransferUniFLEX
                                     }
                                     else
                                     {
-                                        MsgBox.Show("Unable to connect to remote via TCP/IP");
+                                        MsgBox.Show("Unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
                                     }
                                 }
                                 catch
                                 {
-                                    MsgBox.Show("Still unable to connect to remote via TCP/IP");
+                                    MsgBox.Show("Still unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
                                 }
                             }
                         }
@@ -1362,12 +1363,12 @@ namespace TransferUniFLEX
                         }
                         catch
                         {
-                            MsgBox.Show("serial read failed");
+                            MsgBox.Show("serial read failed", "Error", MessageBoxButtons.OK);
                         }
                     }
                     catch 
                     {
-                        MsgBox.Show("serial write failed");
+                        MsgBox.Show("serial write failed", "Error", MessageBoxButtons.OK);
                     }
                     Program.remoteAccess.serialPort.Close();
                     Program.remoteAccess.serialPort = null;
@@ -1396,12 +1397,12 @@ namespace TransferUniFLEX
                     }
                     catch (Exception eRegistry1)
                     {
-                        MsgBox.Show(string.Format("Unable to open registry", eRegistry1.Message));
+                        MsgBox.Show(string.Format("Unable to open registry", eRegistry1.Message), "Error", MessageBoxButtons.OK);
                     }
 
                     if (registryKey == null)
                     {
-                        MsgBox.Show("Unable to open registry");
+                        MsgBox.Show("Unable to open registry", "Error", MessageBoxButtons.OK);
                     }
                 }
             }
@@ -1409,7 +1410,7 @@ namespace TransferUniFLEX
             {
                 registryKey = Registry.CurrentUser.CreateSubKey(@"SOFTWARE\EvensonConsultingServices\TransferUniFLEX", true);
                 if (registryKey == null)
-                    MsgBox.Show(string.Format("Unable to open registry", eRegistry2.Message));
+                    MsgBox.Show(string.Format("Unable to open registry", eRegistry2.Message), "Error", MessageBoxButtons.OK);
             }
 
             // get the available com ports loaded into the list box comboBoxCOMPorts
@@ -1633,10 +1634,10 @@ namespace TransferUniFLEX
                                 }
                             }
                             else
-                                MsgBox.Show("Transfer aborted");
+                                MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
                         }
                         else
-                            MsgBox.Show("Transfer aborted");
+                            MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
                     }
                 }
                 else
@@ -1702,10 +1703,10 @@ namespace TransferUniFLEX
                                 }
                             }
                             else
-                                MsgBox.Show("Transfer aborted");
+                                MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
                         }
                         else
-                            MsgBox.Show("Transfer aborted");
+                            MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
                     }
                     else
                     {
@@ -1801,7 +1802,7 @@ namespace TransferUniFLEX
                             // need to get the list of files in the directory. textBoxUniFLEXFileName.Text will have the
                             // UniFLEX source directory name
 
-                            MsgBox.Show("directory transfer not yet implemented");
+                            MsgBox.Show("directory transfer not yet implemented", "Information", MessageBoxButtons.OK);
                         }
                         else
                         {
@@ -1979,7 +1980,7 @@ namespace TransferUniFLEX
                     }
                     else
                     {
-                        MsgBox.Show("Unable to connect to remote via TCP/IP");
+                        MsgBox.Show("Unable to connect to remote via TCP/IP", "Error", MessageBoxButtons.OK);
                     }
 
                     // do not close the socket once it has been created
@@ -2336,7 +2337,7 @@ namespace TransferUniFLEX
             string chmFilePath = Path.Combine(executionDirectory, "TransferUniFLEX_-_transfer.chm");
             if (!System.IO.File.Exists(chmFilePath))
             {
-                MsgBox.Show("The specified .chm file does not exist.");
+                MsgBox.Show("The specified .chm file does not exist.", "Information", MessageBoxButtons.OK);
                 return;
             }
 
@@ -2517,13 +2518,13 @@ namespace TransferUniFLEX
                                     else
                                     {
                                         // we should necer get here
-                                        MsgBox.Show("what are we doing here");
+                                        MsgBox.Show("what are we doing here", "Error", MessageBoxButtons.OK);
                                     }
                                 }
                                 else
                                 {
                                     // we should necer get here either
-                                    MsgBox.Show("what are we doing here");
+                                    MsgBox.Show("what are we doing here", "Error", MessageBoxButtons.OK);
                                 }
                             }
                             Cursor = Cursors.Default;
@@ -2531,7 +2532,7 @@ namespace TransferUniFLEX
                         catch (Exception ex)
                         {
                             Cursor = Cursors.Default;
-                            MsgBox.Show(ex.Message);
+                            MsgBox.Show(ex.Message, "Error", MessageBoxButtons.OK);
                             error = true;
                         }
 
@@ -2596,6 +2597,8 @@ namespace TransferUniFLEX
 
                 Properties.Settings.Default.isMinix = true;
                 Properties.Settings.Default.Save();
+
+                buttonChangeDirectory.Enabled = true;
             }
             else
             {
@@ -2614,6 +2617,8 @@ namespace TransferUniFLEX
 
                 Properties.Settings.Default.isMinix = false;
                 Properties.Settings.Default.Save();
+
+                buttonChangeDirectory.Enabled = false;
             }
         }
 
@@ -2645,6 +2650,55 @@ namespace TransferUniFLEX
                 Program.SaveConfigurationAttribute("Global/TransferUniFLEX", "EditorPath", editor);
                 Program.SaveConfigurationAttribute("Global/TransferUniFLEX", "UseExternalEditor", useExternalEditor ? "Y" : "N");
             }
+        }
+
+        private void buttonChangeDirectory_Click(object sender, EventArgs e)
+        {
+            int response = 0;
+            bool proceed = true;
+
+            // open the port
+            if (radioButtonCOMPort.Checked)
+            {
+                // first get the current directory from minix so we can edit it or just replace it
+                //
+                //      GetCurrentWorkingDirectory opens and closes the port.
+
+                string currentWorkingDirectory = GetCurrentWorkingDirectory(Program.remoteAccess.serialPort);
+                frmChangeDirectory dlg = new frmChangeDirectory(currentWorkingDirectory);
+                DialogResult r = dlg.ShowDialog();
+
+                if (r == DialogResult.OK)
+                {
+                    // first we need to open the port
+                    Program.OpenComPort(comboBoxCOMPorts.Text, comboBoxBaudRate.Text);
+
+                    // if success - proceed
+                    if (Program.remoteAccess.serialPort.IsOpen)
+                    {
+                        // tell remote what we want to do - change directory
+                        response = SendByte(Program.remoteAccess.serialPort, acceptDirectoryName);
+                        if (response == 0x06)
+                        {
+                            // we got an ACK - remote is OK with our intentions - send the directory name
+
+                            byte[] nameBytes = ASCIIEncoding.ASCII.GetBytes(currentWorkingDirectory);
+                            response = SendBytes(Program.remoteAccess.serialPort, nameBytes, 0, nameBytes.Length, true);
+                            if (response == 0x06)
+                            {
+                            }
+                        }
+
+                        // we are done with the port - close it
+                        Program.remoteAccess.serialPort.Close();
+                        Program.remoteAccess.serialPort = null;
+                    }
+                    else
+                        MsgBox.Show("Unable to open the serial port", "Error", MessageBoxButtons.OK);
+                }
+            }
+            else
+                MsgBox.Show("Change Directory is only supported for Serial port on minix", "Information", MessageBoxButtons.OK);
         }
     }
 }

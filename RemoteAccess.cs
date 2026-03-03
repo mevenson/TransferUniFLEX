@@ -100,7 +100,7 @@ namespace TransferUniFLEX
                         {
                             try
                             {
-                                serialPort.ReadTimeout = 500; // 1/2 second
+                                serialPort.ReadTimeout = readTimeout; // defaults to 1/2 second if not passed in
                                 response = serialPort.ReadByte();
                                 retryCount = 0;
                             }

@@ -54,6 +54,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frmChangeDirectory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmChangeDirectory.Designer.cs">
+      <DependentUpon>frmChangeDirectory.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmDialogGetEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -129,6 +135,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Win32.cs" />
+    <EmbeddedResource Include="frmChangeDirectory.resx">
+      <DependentUpon>frmChangeDirectory.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmDialogGetEditor.resx">
       <DependentUpon>frmDialogGetEditor.cs</DependentUpon>
     </EmbeddedResource>

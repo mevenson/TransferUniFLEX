@@ -85,6 +85,7 @@ namespace TransferUniFLEX
             this.radioButtonCOMPort = new System.Windows.Forms.RadioButton();
             this.checkBoxWarningsOff = new System.Windows.Forms.CheckBox();
             this.groupBoxOptions = new System.Windows.Forms.GroupBox();
+            this.buttonChangeDirectory = new System.Windows.Forms.Button();
             this.checkBoxKeepZeroLengthFiles = new System.Windows.Forms.CheckBox();
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
             this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
@@ -628,6 +629,7 @@ namespace TransferUniFLEX
             // 
             // groupBoxOptions
             // 
+            this.groupBoxOptions.Controls.Add(this.buttonChangeDirectory);
             this.groupBoxOptions.Controls.Add(this.checkBoxKeepZeroLengthFiles);
             this.groupBoxOptions.Controls.Add(this.buttonForceRemoteExit);
             this.groupBoxOptions.Controls.Add(this.checkBoxWarningsOff);
@@ -638,6 +640,16 @@ namespace TransferUniFLEX
             this.groupBoxOptions.TabIndex = 3;
             this.groupBoxOptions.TabStop = false;
             this.groupBoxOptions.Text = "Options";
+            // 
+            // buttonChangeDirectory
+            // 
+            this.buttonChangeDirectory.Location = new System.Drawing.Point(206, 40);
+            this.buttonChangeDirectory.Name = "buttonChangeDirectory";
+            this.buttonChangeDirectory.Size = new System.Drawing.Size(75, 23);
+            this.buttonChangeDirectory.TabIndex = 4;
+            this.buttonChangeDirectory.Text = "chdir";
+            this.buttonChangeDirectory.UseVisualStyleBackColor = true;
+            this.buttonChangeDirectory.Click += new System.EventHandler(this.buttonChangeDirectory_Click);
             // 
             // checkBoxKeepZeroLengthFiles
             // 
@@ -805,6 +817,7 @@ namespace TransferUniFLEX
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editorToolStripMenuItem;
+        private System.Windows.Forms.Button buttonChangeDirectory;
     }
 }
 
