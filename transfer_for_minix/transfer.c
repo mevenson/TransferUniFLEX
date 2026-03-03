@@ -12,6 +12,8 @@
 #define SIZEOFDIRNAME   512
 #define MAXPATHLEN      128
 
+#define DEFAULT_CODE 0xFF;
+
 #define version "transfer version 0.4:10\n"
 
 FILE *popen();
@@ -38,7 +40,7 @@ struct sgttyb settings;
 struct stat statBuffer;
 char padding[128];
 
-int commPort;
+int commNumber;
 
 unsigned int crc_table[] =
 {
@@ -84,9 +86,9 @@ int count;
   BYTE status = 0;
   BYTE *portadm = (BYTE*)DUART1;
 
-  /* if commPort is in DUART 2, set address to DUART2 */
+  /* if commNumber is in DUART 2, set address to DUART2 */
   
-  if (commPort == 3 || commPort == 4)
+  if (commNumber == 3 || commNumber == 4)
     portadm = (BYTE*)DUART2;
 
   for (i = 0; i < count; i++)
@@ -95,14 +97,14 @@ int count;
     status = 0;
     while ((status & S_TRDY) == 0)
     {
-      /* if commPort is the B side of the DUART, do this */
-      if (commPort == 1 || commPort == 3)
+      /* if commNumber is the B side of the DUART, do this */
+      if (commNumber == 1 || commNumber == 3)
       	status = *((BYTE*)(portadm + DSTATA));
       else
       	status = *((BYTE*)(portadm + DSTATB));
     }
  
-    if (commPort == 1 || commPort == 3)
+    if (commNumber == 1 || commNumber == 3)
       *(BYTE*)(portadm + DDATAA) = bytePtr[i];
     else
       *(BYTE*)(portadm + DDATAB) = bytePtr[i];
@@ -117,8 +119,8 @@ int count;
   BYTE status = 0;
   BYTE *portadm = (BYTE*)DUART1;
 
-  /* if commPort is in DUART 2, set address to DUART2*/
-  if (commPort == 3 || commPort == 4)
+  /* if commNumber is in DUART 2, set address to DUART2*/
+  if (commNumber == 3 || commNumber == 4)
     portadm = (BYTE*)DUART2;
 
   for (i = 0; i < count; i++)
@@ -127,14 +129,14 @@ int count;
     status = 0;
     while ((status & S_RRDY) == 0)
     {
-      /* if commPort is the B side of the DUART, do this */
-      if (commPort == 1 || commPort == 3)
+      /* if commNumber is the B side of the DUART, do this */
+      if (commNumber == 1 || commNumber == 3)
       	status = *((BYTE*)(portadm + DSTATA));
       else
       	status = *((BYTE*)(portadm + DSTATB));
     }
  
-    if (commPort == 1 || commPort == 3)
+    if (commNumber == 1 || commNumber == 3)
       bytePtr[i] = *(BYTE*)(portadm + DDATAA);
     else
       bytePtr[i] = *(BYTE*)(portadm + DDATAB);
@@ -854,6 +856,72 @@ char *s;
     return v;
 }
 
+void setCurrDir ()
+{
+  int i;
+
+  int currentBlock;
+  int fdFile;
+  int size;
+  int recv_ccitt;
+  int calc_ccitt;
+  int retryCount;
+  int statReturn;
+
+  /* remote will be sending a directory name. The directory may */
+  /* or may not exist. If it does do a chdir to it. If it does  */
+  /* not - create it and then do a chdir to it */
+
+  for (i = 0; i < SIZEOFFILENAME; i++)
+  {
+    read_fdTTY(commNumber, &filename[i], 1);
+
+    /* remote will send 0x00 to end input of filename */
+
+    if (filename[i] != 0x00)
+      write_fdTTY(commNumber, ackBuffer, 1);
+    else
+      break;
+  }
+
+  /* we need to see if the directory name exists */
+
+  for (i = 0; i < strlen(filename); i++)
+  {
+    /* see if there is a directory that needs */
+    /* to be created */
+
+    if (filename[i] == '/' && i > 0)
+    {
+      if (verbose == 1)
+        printf("found slash at offset %d in filename\n", i);
+
+      filename[i] = 0x00;     /* terminate */
+
+      statReturn = directoryExists(filename);
+      switch (statReturn)
+      {
+      case 1:
+          if (verbose == 1)
+          {
+              printf("directory %s already exists\n", filename);
+              chdir(filename);
+          }
+          break;
+      case 0:
+      case -1:
+          if (verbose == 1)
+              printf("creating directory %s\n", filename);
+          sprintf(commandLine, "mkdir %s", filename);
+          system(commandLine);
+          chdir(filename);
+          break;
+      }
+      filename[i] = '/';
+    }
+  }
+}
+
 /* handle requests (commands) from the client using ttyfd */
 
 void main (argc, argv)
@@ -862,12 +930,12 @@ char **argv;
 {
   int i;
   int j;
-  unsigned long baudRate = 19200;
-  unsigned char brCode = 0xCC;
-  unsigned char *baud;
+  unsigned long baudRate;
   char c;
+  unsigned char *baud;
+  unsigned char brCode = DEFAULT_CODE;
   
-  commPort = 1;    /* set default in case it is not supplied */
+  commNumber = 1;    /* set default in case it is not supplied */
   
   ackBuffer[0] = 0x06; ackBuffer[1] = 0x00;
   nakBuffer[0] = 0x15; nakBuffer[1] = 0x00;
@@ -896,14 +964,31 @@ char **argv;
         (argv[i][2] == '=')
       )
     {
+      /* user specified baud rate on the command line */
       baud = (unsigned char *)(argv[i] + 3);/* point to the numeric value */
-      baudRate = atoul(baud);
+      baudRate = atoul(baud);               /* convert from string to long */
+      if (baudRate != 115200 &&             /* make sure it is valid */
+          baudRate !=  57600 &&
+          baudRate !=  38400 &&
+          baudRate !=  19200 &&
+          baudRate !=   9600 &&
+          baudRate !=   4800 &&
+          baudRate !=   2400 &&
+          baudRate !=   1200 &&
+          baudRate !=    600 &&
+          baudRate !=    300 &&
+          baudRate !=    110
+         )
+      {
+          printf ("Invalid baud rate specified - connot continue\n");
+          exit(1);
+      }
       brCode = setRateCode(baudRate);
     }
     else
     {
     	/* no dash means this is the comm port */
-        commPort = argv[i][0] & 0x07;	/* only 1 through 4 is valid */
+        commNumber = argv[i][0] & 0x07;	/* only 1 through 4 is valid */
     }
   }
   
@@ -915,42 +1000,19 @@ char **argv;
     buffer[i] = 0x00;
 
   /* open the comm port */
-  if (commPort > 0 && commPort < 5)
+  if (commNumber > 0 && commNumber < 5)
   {
-    /* printf ("Setting up COM %d for %ld baud\n", commPort, baudRate); */
-    printf("Setting up COM %d for ", commPort);
+    baudRate = initPort (commNumber, brCode);  /* set up comm port @ correct baud */
+
+    printf("Setting up COM %d for ", commNumber);
     print_ulong(baudRate);
     printf(" baud\n");
-
-    initPort (commPort, brCode);  /* set up comm port @ correct baud */
   }
   else
   {
     printf("Only ports 1 through 4 are valid\n");
     exit(1);
   }
-
-  /* we are going to use direct I/O access instead of using the /dev/ttyx */
-  /*
-  sprintf(device, "/dev/tty%s", commPort);
-  fdTTY = open(device, O_RDWR);
-  if (fdTTY < 0)
-  {
-    printf("Invalid tty device number specified\n");
-  }
-  
-  printf("file descriptor for the %s is %d\n", device, fdTTY);
-  */
-  
-  /* turn off echo */
-  /*
-  gtty(fdTTY, &settings);
-  settings.sg_flags = RAW;
-  stty(fdTTY, &settings);
-  */
-  
-  /* send a notice to commPort to make sure server knows we are minix */
-  /* write_fdTTY("minix", 5); */
 
   printf ("size of stat buffer = %d\n", sizeof(statBuffer));
   
@@ -963,7 +1025,8 @@ char **argv;
     printf("received: %02x\n", buffer[0]); /* Print the read data  */
     command = buffer[0];
 
-    if (command == 0x02 ||
+    if (command == 0x01 ||
+        command == 0x02 ||
         command == 0x03 ||
         command == 0x04 ||
         command == 0x05)
@@ -971,7 +1034,11 @@ char **argv;
       printf("sending ACK to command\n");
       write_fdTTY(ackBuffer, 1);
 
-      if (command == 0x02)        /* receive a file from PC */
+      if (command == 0x01)        /* set the current working directory */
+      {
+          setCurrDir();
+      }
+      else if (command == 0x02)        /* receive a file from PC */
       {
           recvFile();
       }

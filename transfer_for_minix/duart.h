@@ -11,6 +11,7 @@
 
 #define DUART1    0x00FE0000           /* DUART 1 ADDRESS          */
 #define DUART2    0x00FE0040           /* DUART 2 ADDRESS          */
+
 #define DMODEA    1                    /* PORT A MODE REG          */
 #define DCLOCA    3                    /* PORT A CLOCK REG         */
 #define DSTATA    3                    /* PORT A STATUS REG        */
@@ -22,6 +23,7 @@
 #define DINTST    11                   /* INTERRUPT STATUS REG     */
 #define DCTUPR    13                   /* CTR/TIMER UPPER REGISTER */
 #define DCTLOW    15                   /* CTR/TIMER LOWER REGISTER */
+
 #define DMODEB    17                   /* PORT B MODE REG          */
 #define DCLOCB    19                   /* PORT B CLOCK REG         */
 #define DSTATB    19                   /* PORT B STATUS REG        */
@@ -30,11 +32,32 @@
 #define DIVECT    25                   /* INTERRUPT VECTOR REG     */
 #define DIPORT    27                   /* INPUT PORT               */
 #define DOPORT    27                   /* OUTPUT PORT              */
+
 #define PIT       0x00FE0080           /* PARALLEL INTERFACE/TIMER */
 #define PSRR      3                    /* PIT SERVICE CONTROL REG  */
 #define PPCDDR    9                    /* PIT PORT C DIRECTION REG */
+
 #define S_TRDY    0x04
 #define S_RRDY    0x01
+
+#define AD_TRWBRD 0x00FA0100
+#define TRWBRD ((unsigned char *) AD_TRWBRD)
+
+#define RAM	      0xFF0000              /* STATIC RAM IN PT68K-2 */
+
+/* HUMBUG currently uses from RAM to RAM + 741 (0x2E5) bytes and */
+/* RAM+$09E8 for 512 bytes and RAM+$0BE8 for 402 (0x192) bytes   */
+    /*
+        0xFF0000 - 0xFF02E5
+        0xFF0BE8 - 0xFF0D7A
+    */
+/* and then there is this:
+        SSTACK    EQU RAM+$0E00            SUPERVISOR STACK
+        USTACK    EQU RAM+$0F00            USER STACK
+        BSTACK    EQU USTACK               BASIC'S STACK
+        MSTACK    EQU RAM+$0FE0            HUMBUG STACK
+*/
+#define BRG_SAVE_BASE 0x00FF0DD6    /* if K4HUMBUG ROM changes - check this */
 
 void waitHalfSecond ()
 {
@@ -44,11 +67,13 @@ void waitHalfSecond ()
 }
 
 unsigned char setRateCode (rate)
-long rate;
+unsigned long rate;
 {
-  unsigned char brCode = 0xCC;
+  unsigned int intRate;
+  unsigned char brCode = 0xDD;  /* make 38400 the default */
   
-  switch ((unsigned int)(rate / 10))
+  intRate = rate / 10L;
+  switch (intRate)
   {
   	/* divide by 10 so that the value can be an int */
         
@@ -63,26 +88,13 @@ long rate;
   	case 60:  	brCode = 0x77; break;
   	case 30:  	brCode = 0x66; break;
   	case 15:  	brCode = 0x55; break;
-  	case 10:  	brCode = 0x44; break;
- 	default:  /* to 19200 */        
-  	  brCode = 0xCC;
+  	case 11:  	brCode = 0x44; break;
+ 	default:  /* to 38400 */        
+  	  brCode = 0xDD;
   	  break;
    }
    
    return (brCode);
-}
-
-/* this is from the test.c program where I tested writing to DUART1 */
-void init_rate(rate)
-BYTE rate;
-{
-  *(BYTE*)(DUART1 + DCOMMA) = 0x20;    /* reset receiver                  */
-  *(BYTE*)(DUART1 + DCOMMA) = 0x15;    /* CRA: mode = 1, enable RX and TX */
-  *(BYTE*)(DUART1 + DCOMMA) = 0x05;    /* CRA: enable RX and TX           */
-  *(BYTE*)(DUART1 + DMODEA) = 0x13;    /* MRA1: no RTS, no parity, 8 bits */
-  *(BYTE*)(DUART1 + DMODEA) = 0x07;    /* MRA2: no RTS, 1 stop bit        */
-  *(BYTE*)(DUART1 + DAUXCR) = 0xE4;    /* AUX control register = set 2    */
-  *(BYTE*)(DUART1 + DCLOCA) = rate;    /* set CSRA to the baud rate       */
 }
 
 /* setting the Aux Control Register to 0xE4 has the following effect:
@@ -249,90 +261,156 @@ BYTE rate;
 |   if rate = FF    use C and set rate = 6  ACR = 0x64 or 0xE4  |
 +--------------------------------------------------------------*/
 
-void initPort (commNumber, rate)
-int commNumber;
-BYTE rate;
+BYTE brgTestMode = 0;    /* after a reset the BRG Test mode is off */
+BYTE brgTestByte;
+
+/* 
+    do not use the return value for anything/ it is here just to keep 
+    the optimizer from getting rid of the read 
+    
+    BRG_SAVE_BASE (0x00FF0DD6) is the memory location where we 
+    remember the current state of the BRG Test Resgisters. It
+    is an int so it can hold two bytes - one for each DUART.
+*/
+
+unsigned char setBRGTest(commNumber, enable)
+int commNumber, enable;
 {
-  BYTE D0;
-  
   BYTE *portadm = (BYTE*)DUART1;
 
   /* if commNumber is in DUART 2, add 0x40 to address */
   if (commNumber == 3 || commNumber == 4)
     portadm += 0x40;
 
-  /* if commNumber is the B side of the DUART, do this */
-  if (commNumber == 2 || commNumber == 4)
+  /* get the current state of the BRG Test Register for this com port*/
+  brgTestMode = *((BYTE*)(BRG_SAVE_BASE + (commNumber > 2 ? 1 : 0))); 
+  printf("current BRG Test mode = %s\n", brgTestMode == 0 ? "off" : "on");
+  printf("requested BRG Test mode = %s\n", enable == 0 ? "off" : "on");
+  
+  if ((enable && !brgTestMode) || (!enable && brgTestMode))
   {
-    *(portadm + DCOMMB) = (BYTE)0x20; /* RESET RECEIVER                  */
-    *(portadm + DCOMMB) = (BYTE)0x15; /* CRB: MODE=1, ENABLE RX&TX       */
-    *(portadm + DCOMMB) = (BYTE)0x05; /* CRB: ENABLE RX & TX             */
-    *(portadm + DMODEB) = (BYTE)0x13; /* MRB1: NO RTS, NO PARITY, 8 BITS */
-    *(portadm + DMODEB) = (BYTE)0x07; /* MRB2: RTS,1 STOP BIT            */
-    *(portadm + DCLOCB) = rate;       /* sets baud rate                  */
-  }
-  else
-  {
-    *(portadm + DCOMMA) = (BYTE)0x20; /* RESET RECEIVER                  */
-    *(portadm + DCOMMA) = (BYTE)0x15; /* CRA: MODE=1, ENABLE RX&TX       */
-    *(portadm + DCOMMA) = (BYTE)0x05; /* CRA: ENABLE RX & TX             */
-    *(portadm + DMODEA) = (BYTE)0x13; /* MRA1: NO RTS, NO PARITY, 8 BITS */
-    *(portadm + DMODEA) = (BYTE)0x07; /* MRA2: NO RTS,1 STOP BIT         */
-    *(portadm + DCLOCA) = rate;       /* SET CSRA TO BAUD RATE           */
+    printf("current BRG Test mode does not equal requested BRG Test mode - toggling\n");
+    
+    /* the current state is NOT what we want - toggle it */
+    /* only reading DCOMMA can toggle the BRG Test mode  */
+    
+    brgTestByte = *(portadm + DCOMMA);  /* READ CRA TO TOGGLE  BRG TEST MODE */
+
+    /* commNumber is 1 based - using it as an offset requires adjustment */ 
+    /* also bear in mind that the MK48T02 static battery backed up RAM   */
+    /* only occupies the odd bytes and the 6116 occupies the even bytes  */
+    /* so only evey other byte is maintained during power cycles. This   */
+    /* does npt affect us since we do not need to maintain the values    */
+    /* between power sycles. Only while minix is running                 */
+        
+    brgTestMode = !brgTestMode;                          /* toggle the variable as well */
+    *((BYTE*)(BRG_SAVE_BASE + (commNumber > 2 ? 1 : 0))) = brgTestMode ;  /* now save it in RAM */
   }
   
-  if (rate <= 0x88) /* use table A above */
-  {
-      *(portadm + DAUXCR) = (BYTE)0x24; /* ACR = SET 2, BGR = test      */
-  }
-  else if (rate == 0x99) /* if 2400 */
-  {
-      *(portadm + DAUXCR) = (BYTE)0xA4; /* ACR = SET 2, BGR = test      */
-      *(portadm + DCLOCA) = 0x88;       /* SET CSRA TO BAUD RATE        */
-  }
-  else if (rate == 0xAA) /* if 4800                      */
-  {
-      *(portadm + DAUXCR) = (BYTE)0xE4; /* ACR = SET 2, BGR = test      */
-      *(portadm + DCLOCA) = 0x99;       /* SET CSRA TO BAUD RATE        */
-  }
-  else if ((rate == 0xBB) || (rate == 0xCC)) /* if 9600 or 19200        */
-  {                                          /* leave these alone       */
-      *(portadm + DAUXCR) = (BYTE)0xE4; /* ACR = SET 2, BGR = test      */
-  }
-  else if (rate == 0xDD) /* if 38400 - select set 1 and set to 0xCC     */
-  {
-    *(portadm + DAUXCR) = (BYTE)0x64;   /* ACR = SET 1, BGR = test      */
-    *(portadm + DCLOCA) = 0xCC;         /* SET CSRA TO BAUD RATE        */
-  }
-  else if (rate == 0xEE) /* if 57600 - select set 2 and set to 0x88 */
-  {
-    *(portadm + DAUXCR) = (BYTE)0x64;   /* ACR = SET 1, BGR = test      */
-    *(portadm + DCLOCA) = 0xAA;         /* SET CSRA TO BAUD RATE        */
-  }
-  else if (rate == 0xFF) /* if 115200 - select set 2 and set to 0x66 */
-  {
-    *(portadm + DAUXCR) = (BYTE)0x64;   /* ACR = SET 1, BGR = test      */
-    *(portadm + DCLOCA) = 0x66;         /* SET CSRA TO BAUD RATE        */
-  }
-  else
-    *(portadm + DAUXCR) = (BYTE)0xE4; /* AUX CONTROL REG = SET 2         */
-  
-  /* make sure the receive buffer gets emptied */
+  printf("current BRG Test mode = %s\n", brgTestMode == 0 ? "off" : "on");
+  return (brgTestByte); /* not actually a useful value */
+}  
 
-/*  
-  if (commNumber == 2 || commNumber == 4)
-  {
-    while (*(BYTE*)(portadm + DSTATB) & (BYTE)0x01 == (BYTE)0x01)
-      D0 = *(BYTE*)(portadm + DDATAB);
-  }
-  else
-  {
-    while (*(BYTE*)(portadm + DSTATA) & (BYTE)0x01 == (BYTE)0x01)
-      D0 = *(BYTE*)(portadm + DDATAA);
-  }
-
-  waitHalfSecond();
-*/
-
+unsigned long initPort (commNumber, rate)
+int commNumber;
+BYTE rate;
+{
+    int D_CLOCK;
+    unsigned long baudRate;
+    
+    BYTE *portadm = (BYTE*)DUART1;
+    
+    /* if commNumber is in DUART 2, add 0x40 to address */
+    if (commNumber == 3 || commNumber == 4)
+      portadm += 0x40;
+    
+    /* if commNumber is the B side of the DUART, do this */
+    if (commNumber == 2 || commNumber == 4)
+    {
+        *(portadm + DCOMMB) = (BYTE)0x20; /* RESET RECEIVER                  */
+        *(portadm + DCOMMB) = (BYTE)0x15; /* CRB: MODE=1, ENABLE RX&TX       */
+        *(portadm + DCOMMB) = (BYTE)0x05; /* CRB: ENABLE RX & TX             */
+        *(portadm + DMODEB) = (BYTE)0x13; /* MRB1: NO RTS, NO PARITY, 8 BITS */
+        *(portadm + DMODEB) = (BYTE)0x07; /* MRB2: RTS,1 STOP BIT            */
+        D_CLOCK = DCLOCB;
+    }
+    else
+    {
+        *(portadm + DCOMMA) = (BYTE)0x20; /* RESET RECEIVER                  */
+        *(portadm + DCOMMA) = (BYTE)0x15; /* CRA: MODE=1, ENABLE RX&TX       */
+        *(portadm + DCOMMA) = (BYTE)0x05; /* CRA: ENABLE RX & TX             */
+        *(portadm + DMODEA) = (BYTE)0x13; /* MRA1: NO RTS, NO PARITY, 8 BITS */
+        *(portadm + DMODEA) = (BYTE)0x07; /* MRA2: NO RTS,1 STOP BIT         */
+        D_CLOCK = DCLOCA;
+    }
+    *(portadm + D_CLOCK) = rate;         /* sets baud rate                   */
+    
+    if (rate <= 0x88) /* use table A above                                  */
+    {
+        switch (rate)
+        {
+            case 0x00: /* 0000 */ baudRate =   50L ; break; 
+            case 0x11: /* 0001 */ baudRate =  110L ; break;
+            case 0x22: /* 0010 */ baudRate =  134L ; break;
+            case 0x33: /* 0011 */ baudRate =  200L ; break;
+            case 0x44: /* 0100 */ baudRate =  300L ; break;
+            case 0x55: /* 0101 */ baudRate =  600L ; break;
+            case 0x66: /* 0110 */ baudRate = 1200L ; break;
+            case 0x77: /* 0111 */ baudRate = 1050L ; break;
+            case 0x88: /* 1000 */ baudRate = 2400L ; break;
+        }
+        *(portadm + DAUXCR) = (BYTE)0x24;   /* ACR = SET 1                  */
+        setBRGTest(commNumber, 0);          /* make sure BRG Test is off    */
+    }
+    else if (rate == 0x99) /* if 2400                                       */
+    {
+        baudRate = 2400L;
+        *(portadm + DAUXCR) = (BYTE)0xA4;   /* ACR = SET 2                  */
+        *(portadm + D_CLOCK) = 0x88;         /* SET CSRA TO BAUD RATE        */
+        setBRGTest(commNumber, 0);          /* make sure BRG Test is off    */
+    }
+    else if (rate == 0xAA) /* if 4800                                       */
+    {
+        baudRate = 4800L;
+        *(portadm + DAUXCR) = (BYTE)0xE4;   /* ACR = SET 2                  */
+        *(portadm + D_CLOCK) = 0x99;         /* SET CSRA TO BAUD RATE        */
+        setBRGTest(commNumber, 0);          /* make sure BRG Test is off    */
+    }
+    else if ((rate == 0xBB) || (rate == 0xCC)) /* if 9600 or 19200          */
+    {                                       /* leave these alone            */
+        if (rate == 0xBB)
+            baudRate = 9600L;
+        else
+            baudRate = 19200L;
+        *(portadm + DAUXCR) = (BYTE)0xE4;   /* ACR = SET 2                  */
+    }
+    else if (rate == 0xDD) /* if 38400 - select set 1 and set to 0xCC       */
+    {
+        baudRate = 38400L;
+        *(portadm + DAUXCR) = (BYTE)0x64;   /* ACR = SET 1                  */
+        *(portadm + D_CLOCK) = 0xCC;         /* SET CSRA TO BAUD RATE        */
+        setBRGTest(commNumber, 0);          /* make sure BRG Test is off    */
+    }
+    else if (rate == 0xEE) /* if 57600 - select set 2 and set to 0x88       */
+    {
+        baudRate = 57600L;
+        *(portadm + DAUXCR) = (BYTE)0xE4;   /* ACR = SET 2                  */
+        *(portadm + D_CLOCK) = 0x55;         /* SET CSRA TO BAUD RATE        */
+        setBRGTest(commNumber, 1);          /* make sure BRG Test is on     */
+    }
+    else if (rate == 0xFF) /* if 115200 - select set 2 and set to 0x66      */
+    {
+        baudRate = 115200L;
+        *(portadm + DAUXCR) = (BYTE)0xE4;   /* ACR = SET 2                  */
+        *(portadm + D_CLOCK) = 0x66;         /* SET CSRA TO BAUD RATE        */
+        setBRGTest(commNumber, 1);          /* make sure BRG Test is on     */
+    }
+    else
+    {
+        *(portadm + DAUXCR) = (BYTE)0xE4;   /* AUX CONTROL REG = SET 2      */
+        setBRGTest(commNumber, 0);          /* make sure BRG Test is off    */
+    }
+    
+    return (baudRate);
 }
 
