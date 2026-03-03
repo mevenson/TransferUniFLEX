@@ -14,7 +14,7 @@
 
 #define DEFAULT_CODE 0xFF;
 
-#define version "transfer version 0.4:10\n"
+#define version "transfer version 0.4:20\n"
 
 FILE *popen();
 char *getcwd();
