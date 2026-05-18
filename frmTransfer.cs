@@ -21,9 +21,12 @@ namespace TransferUniFLEX
         string _version = Program.version.ToString();
         RegistryKey registryKey = null;
 
-        private string dialogConfigType = "TransferUbiFLEX";
+        private string dialogConfigType = "TransferUniFLEX";
         private string editor = "";
         private bool useExternalEditor = false;
+
+        int bytesReadThisFile = 0;
+        long totalBytesToTransfer = 0;
 
         public frmTransfer()
         {
@@ -324,6 +327,7 @@ namespace TransferUniFLEX
 
             // create the directory if it does not exist
             bool directoryOK = true;
+
             if (Path.GetDirectoryName(localFilename).Length > 0)
             {
                 if (!Directory.Exists(Path.GetDirectoryName(localFilename)))
@@ -400,6 +404,7 @@ namespace TransferUniFLEX
                             //  When the remote is done sending the file, it will send a byte count of zero
                             //  and no data or CCITT. move on to the next file.
 
+                            bytesReadThisFile = 0;
                             while (true)
                             {
                                 Application.DoEvents();     // let the system update the status bar.
@@ -408,6 +413,7 @@ namespace TransferUniFLEX
                                 blockSize = (byte)serialPort.ReadByte() * 256;
                                 blockSize += (byte)serialPort.ReadByte();
 
+                                bytesReadThisFile += blockSize;
                                 if (blockSize > 0)
                                 {
                                     byte[] blockBuffer = new byte[blockSize];
@@ -1171,7 +1177,8 @@ namespace TransferUniFLEX
                             // if the filename in the local filename text box is empty use the filename from the UniFLEX
                             // filename (just the filename) combined with the local directory selected
 
-                            fileToGet = textBoxLocalFileName.Text;
+                            if (textBoxLocalFileName.Text.Length > 0)
+                                fileToGet = textBoxLocalFileName.Text;
                         }
 
                         error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
@@ -1385,6 +1392,10 @@ namespace TransferUniFLEX
             // when they need to be shown.
 
             this.Size = new Size(525, 515);
+            
+            // make sure these get cleared.
+            labelRemainingBytesToTransfer.Text = "";
+            labelRemainingFilesToTransfer.Text = "";
 
             try
             {
@@ -1505,8 +1516,51 @@ namespace TransferUniFLEX
             stop = false;
             string currentWorkingDirectory = "";
 
+            // 1. Prepare UI before starting the loop
+
+            long bytesTransferred = 0;
+            int filesTransferred = 0;
+            int filesToTransfer = selectedFileInfos.Count;
+
+
+            buttonStart.Enabled = false;       // Prevent double-clicking
+            transferProgressBar.Minimum = 0;          // 0 percent
+            transferProgressBar.Maximum = 100;        // up to 100%
+            transferProgressBar.Value = 0;
+            transferProgressBar.Visible = true;       // Reveal the embedded progress bar
+            labelStatus.Text = "";
+
+            transferProgressBar.CustomText = "";
+
+            // 2. Setup the reporter to sync background updates safely to the UI thread
+            var progressReporter = new Progress<int>(value =>
+            {
+                transferProgressBar.Value = value;
+                if (totalBytesToTransfer == bytesTransferred)
+                {
+                    labelStatus.Text = "Complete";
+                    labelRemainingBytesToTransfer.Text = "";
+                    labelRemainingFilesToTransfer.Text = "";
+                }
+                else
+                {
+                    string remainingBytesToTransfer = (totalBytesToTransfer - bytesTransferred).ToString("N0");
+
+                    labelRemainingBytesToTransfer.Text = remainingBytesToTransfer;
+                    labelRemainingFilesToTransfer.Text = (filesToTransfer - filesTransferred).ToString("N0");
+
+                    labelStatus.Text = $"Progress: {value}%";
+                    transferProgressBar.CustomText = $"{bytesTransferred.ToString("N0")} bytes transferred";
+
+                    // Force the progress bar to redraw itself with the new text
+                    transferProgressBar.Invalidate();
+                }
+            });
+
             // save current configuration as the default
             Cursor = Cursors.WaitCursor;
+
+            // 3. Run the heavy loop 
 
             if (radioButtonSend.Checked)        // only doing send
             {
@@ -1604,6 +1658,9 @@ namespace TransferUniFLEX
 
                             if (proceed)
                             {
+                                bytesTransferred = 0;
+                                IProgress<int> progress = progressReporter;
+
                                 string[] filenames = Directory.GetFiles(textBoxLocalDirName.Text, "*", checkBoxRecursive.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                                 foreach (string filename in filenames)
                                 {
@@ -1623,6 +1680,12 @@ namespace TransferUniFLEX
 
                                     if (Transfer(filename.Replace(@"\", "/"), remoteDirectory.Replace(@"\", "/"), true, true))
                                     {
+                                        filesTransferred++;
+                                        bytesTransferred += bytesReadThisFile;
+                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+
+                                        progress.Report((int)currentPercentage);
+
                                         if (stop)
                                         {
                                             buttonPause.Text = "Pause";
@@ -1632,6 +1695,8 @@ namespace TransferUniFLEX
                                     else
                                         break;
                                 }
+                                labelStatus.Text = "Complete";
+                                Application.DoEvents();
                             }
                             else
                                 MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
@@ -1674,6 +1739,9 @@ namespace TransferUniFLEX
 
                             if (proceed)
                             {
+                                bytesTransferred = 0;
+                                IProgress<int> progress = progressReporter;
+
                                 foreach (string filename in filenames)
                                 {
                                     string remotename = Path.GetFileName(filename).Replace(@"\", "/");
@@ -1692,6 +1760,12 @@ namespace TransferUniFLEX
 
                                     if (Transfer(filename.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), true, false))
                                     {
+                                        filesTransferred++;
+                                        bytesTransferred += bytesReadThisFile;
+                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+
+                                        progress.Report((int)currentPercentage);
+
                                         if (stop)
                                         {
                                             buttonPause.Text = "Pause";
@@ -1701,6 +1775,8 @@ namespace TransferUniFLEX
                                     else
                                         break;
                                 }
+                                labelStatus.Text = "Complete";
+                                Application.DoEvents();
                             }
                             else
                                 MsgBox.Show("Transfer aborted", "Information", MessageBoxButtons.OK);
@@ -1719,6 +1795,8 @@ namespace TransferUniFLEX
                         textBoxResponses.ScrollToCaret();
 
                         bool success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                        filesTransferred++;
+
                         if (stop)
                             buttonPause.Text = "Pause";
                     }
@@ -1739,6 +1817,9 @@ namespace TransferUniFLEX
                     {
                         // we are going to request multiple files specified in the selectedFileInfos list
 
+                        bytesTransferred = 0;
+                        IProgress<int> progress = progressReporter;
+
                         foreach (KeyValuePair<string, FileInformation> fileInfo in selectedFileInfos)
                         {
                             // do all the selected files first
@@ -1757,6 +1838,12 @@ namespace TransferUniFLEX
                                     remoteFilename = Path.Combine(textBoxUniFLEXFileName.Text, fileInfo.Key).Replace(@"\", "/");
 
                                 bool success = Transfer(localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), false, false);
+                                filesTransferred++;
+
+                                bytesTransferred += bytesReadThisFile;
+                                int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+
+                                progress.Report((int)currentPercentage);
 
                                 if (!success)
                                     break;
@@ -1787,6 +1874,8 @@ namespace TransferUniFLEX
                         //        MessageBox.Show($"{fileInfo.Key} is a directory");
                         //    }
                         //}
+                        labelStatus.Text = "Complete";
+                        Application.DoEvents();
                     }
                 }
                 else
@@ -1806,11 +1895,28 @@ namespace TransferUniFLEX
                         }
                         else
                         {
-                            bool success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                            bool success = false;
+                            if (textBoxLocalFileName.Text.Length == 0)
+                            {
+                                // if the local file name text box is empty - build a filename from the local directory text box and the file name
+                                string filenameToSave = Path.Combine(textBoxLocalDirName.Text, fileInfo.Key);
+                                success = Transfer(filenameToSave.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                                filesTransferred++;
+                            }
+                            else
+                            {
+                                success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                                filesTransferred++;
+                            }
                         }
                     }
                 }
             }
+
+            // 4. Reset UI after completion
+
+            buttonStart.Enabled = true;
+
             Cursor = Cursors.Default;
         }
 
@@ -2002,7 +2108,14 @@ namespace TransferUniFLEX
                         DialogResult result = dlg.ShowDialog();
                         if (result == DialogResult.OK)
                         {
-                            selectedFileInfos = dlg.selectedFileInformations;
+                            selectedFileInfos = dlg.selectedFileInformations;       // Dictionary<string, FileInformation>
+
+                            totalBytesToTransfer = 0;
+                            foreach (KeyValuePair<string, FileInformation> kvp in selectedFileInfos)
+                            {
+                                if (!kvp.Value.isDirectory)
+                                    totalBytesToTransfer += kvp.Value.stat.st_size;
+                            }
 
                             // user wants to get the single file selected in the list view.
                             if (selectedFileInfos.Count == 1)
@@ -2699,6 +2812,51 @@ namespace TransferUniFLEX
             }
             else
                 MsgBox.Show("Change Directory is only supported for Serial port on minix", "Information", MessageBoxButtons.OK);
+        }
+    }
+
+    public class TextProgressBar : ProgressBar
+    {
+        // Property to hold the text you want to display
+        public string CustomText { get; set; } = string.Empty;
+
+        // Property to customize the text color
+        public Color TextColor { get; set; } = Color.Black;
+
+        public TextProgressBar()
+        {
+            // Enable custom painting for the control
+            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Rectangle rect = this.ClientRectangle;
+            Graphics g = e.Graphics;
+
+            // 1. Draw the background of the progress bar
+            ProgressBarRenderer.DrawHorizontalBar(g, rect);
+
+            // 2. Draw the filled progress chunk area
+            if (this.Value > 0)
+            {
+                Rectangle clipRect = new Rectangle(rect.X, rect.Y, (int)(rect.Width * ((double)this.Value / this.Maximum)), rect.Height);
+                ProgressBarRenderer.DrawHorizontalChunks(g, clipRect);
+            }
+
+            // 3. Render the centered text overlay
+            string textToShow = string.IsNullOrEmpty(CustomText) ? $"{this.Value}%" : CustomText;
+
+            using (Font font = new Font(this.Font.FontFamily, this.Font.Size, FontStyle.Regular))
+            using (Brush brush = new SolidBrush(TextColor))
+            {
+                // Calculate coordinates to center the text perfectly
+                Size textSize = TextRenderer.MeasureText(textToShow, font);
+                int x = (rect.Width / 2) - (textSize.Width / 2);
+                int y = (rect.Height / 2) - (textSize.Height / 2);
+
+                g.DrawString(textToShow, font, brush, x, y);
+            }
         }
     }
 }

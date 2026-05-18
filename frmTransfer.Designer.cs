@@ -55,6 +55,9 @@ namespace TransferUniFLEX
             this.checkBoxRecursive = new System.Windows.Forms.CheckBox();
             this.textBoxDirectoryReplaceString = new System.Windows.Forms.TextBox();
             this.groupBoxOperatorEntertainment = new System.Windows.Forms.GroupBox();
+            this.labelRemainingBytesToTransfer = new System.Windows.Forms.Label();
+            this.labelStatus = new System.Windows.Forms.Label();
+            this.transferProgressBar = new TransferUniFLEX.TextProgressBar();
             this.buttonClearResponseWindow = new System.Windows.Forms.Button();
             this.labelResponses = new System.Windows.Forms.Label();
             this.textBoxResponses = new System.Windows.Forms.TextBox();
@@ -90,6 +93,7 @@ namespace TransferUniFLEX
             this.buttonForceRemoteExit = new System.Windows.Forms.Button();
             this.checkBoxAllowDirectorySelection = new System.Windows.Forms.CheckBox();
             this.checkBoxMinix = new System.Windows.Forms.CheckBox();
+            this.labelRemainingFilesToTransfer = new System.Windows.Forms.Label();
             this.groupBoxDirection.SuspendLayout();
             this.currentFileProgress.SuspendLayout();
             this.groupBoxOperatorEntertainment.SuspendLayout();
@@ -354,6 +358,10 @@ namespace TransferUniFLEX
             // 
             // groupBoxOperatorEntertainment
             // 
+            this.groupBoxOperatorEntertainment.Controls.Add(this.labelRemainingFilesToTransfer);
+            this.groupBoxOperatorEntertainment.Controls.Add(this.labelRemainingBytesToTransfer);
+            this.groupBoxOperatorEntertainment.Controls.Add(this.labelStatus);
+            this.groupBoxOperatorEntertainment.Controls.Add(this.transferProgressBar);
             this.groupBoxOperatorEntertainment.Controls.Add(this.buttonClearResponseWindow);
             this.groupBoxOperatorEntertainment.Controls.Add(this.labelResponses);
             this.groupBoxOperatorEntertainment.Controls.Add(this.textBoxResponses);
@@ -363,9 +371,36 @@ namespace TransferUniFLEX
             this.groupBoxOperatorEntertainment.TabIndex = 15;
             this.groupBoxOperatorEntertainment.TabStop = false;
             // 
+            // labelRemainingBytesToTransfer
+            // 
+            this.labelRemainingBytesToTransfer.AutoSize = true;
+            this.labelRemainingBytesToTransfer.Location = new System.Drawing.Point(15, 96);
+            this.labelRemainingBytesToTransfer.Name = "labelRemainingBytesToTransfer";
+            this.labelRemainingBytesToTransfer.Size = new System.Drawing.Size(80, 13);
+            this.labelRemainingBytesToTransfer.TabIndex = 5;
+            this.labelRemainingBytesToTransfer.Text = "bytes remaining";
+            // 
+            // labelStatus
+            // 
+            this.labelStatus.AutoSize = true;
+            this.labelStatus.Location = new System.Drawing.Point(12, 123);
+            this.labelStatus.Name = "labelStatus";
+            this.labelStatus.Size = new System.Drawing.Size(24, 13);
+            this.labelStatus.TabIndex = 4;
+            this.labelStatus.Text = "Idle";
+            // 
+            // transferProgressBar
+            // 
+            this.transferProgressBar.CustomText = "";
+            this.transferProgressBar.Location = new System.Drawing.Point(101, 118);
+            this.transferProgressBar.Name = "transferProgressBar";
+            this.transferProgressBar.Size = new System.Drawing.Size(376, 23);
+            this.transferProgressBar.TabIndex = 3;
+            this.transferProgressBar.TextColor = System.Drawing.Color.Black;
+            // 
             // buttonClearResponseWindow
             // 
-            this.buttonClearResponseWindow.Location = new System.Drawing.Point(11, 54);
+            this.buttonClearResponseWindow.Location = new System.Drawing.Point(11, 41);
             this.buttonClearResponseWindow.Name = "buttonClearResponseWindow";
             this.buttonClearResponseWindow.Size = new System.Drawing.Size(75, 23);
             this.buttonClearResponseWindow.TabIndex = 1;
@@ -376,7 +411,7 @@ namespace TransferUniFLEX
             // labelResponses
             // 
             this.labelResponses.AutoSize = true;
-            this.labelResponses.Location = new System.Drawing.Point(19, 25);
+            this.labelResponses.Location = new System.Drawing.Point(19, 21);
             this.labelResponses.Name = "labelResponses";
             this.labelResponses.Size = new System.Drawing.Size(63, 13);
             this.labelResponses.TabIndex = 0;
@@ -391,7 +426,7 @@ namespace TransferUniFLEX
             this.textBoxResponses.Name = "textBoxResponses";
             this.textBoxResponses.ReadOnly = true;
             this.textBoxResponses.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResponses.Size = new System.Drawing.Size(376, 112);
+            this.textBoxResponses.Size = new System.Drawing.Size(376, 89);
             this.textBoxResponses.TabIndex = 2;
             this.textBoxResponses.WordWrap = false;
             // 
@@ -694,6 +729,15 @@ namespace TransferUniFLEX
             this.checkBoxMinix.UseVisualStyleBackColor = true;
             this.checkBoxMinix.CheckedChanged += new System.EventHandler(this.checkBoxMinix_CheckedChanged);
             // 
+            // labelRemainingFilesToTransfer
+            // 
+            this.labelRemainingFilesToTransfer.AutoSize = true;
+            this.labelRemainingFilesToTransfer.Location = new System.Drawing.Point(15, 78);
+            this.labelRemainingFilesToTransfer.Name = "labelRemainingFilesToTransfer";
+            this.labelRemainingFilesToTransfer.Size = new System.Drawing.Size(73, 13);
+            this.labelRemainingFilesToTransfer.TabIndex = 6;
+            this.labelRemainingFilesToTransfer.Text = "files remaining";
+            // 
             // frmTransfer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -818,6 +862,10 @@ namespace TransferUniFLEX
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editorToolStripMenuItem;
         private System.Windows.Forms.Button buttonChangeDirectory;
+        private System.Windows.Forms.Label labelStatus;
+        private TransferUniFLEX.TextProgressBar transferProgressBar;
+        private System.Windows.Forms.Label labelRemainingBytesToTransfer;
+        private System.Windows.Forms.Label labelRemainingFilesToTransfer;
     }
 }
 
