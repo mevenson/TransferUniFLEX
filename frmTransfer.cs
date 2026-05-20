@@ -313,7 +313,7 @@ namespace TransferUniFLEX
         }
 
         // we are going to make this function public so that the Browse dialog can use it to view a file
-        public bool SendFileNameAndRecieveFile (SerialPort serialPort, string localFilename, string filename, int mode)
+        public bool SendFileNameAndRecieveFile (SerialPort serialPort, string localFilename, string filename, int mode, int filesize = 0)
         {
             // mode is currently not used - always 0. I am not sure why it is here, but it isn't hurting
             // anything so - just leave it alone for now. Maybe we can use it know that we are being
@@ -405,6 +405,29 @@ namespace TransferUniFLEX
                             //  and no data or CCITT. move on to the next file.
 
                             bytesReadThisFile = 0;
+                            // 2. Setup the reporter to sync background updates safely to the UI thread
+                            var progressReporter = new Progress<int>(value =>
+                            {
+                                transferProgressBar.Value = value;
+                                if (filesize == bytesReadThisFile)
+                                {
+                                    labelStatus.Text = "Complete";
+                                    labelRemainingBytesToTransfer.Text = "";
+                                    labelRemainingFilesToTransfer.Text = "";
+                                }
+                                else
+                                {
+                                    string remainingBytesToTransfer = (filesize - bytesReadThisFile).ToString("N0");
+
+                                    labelStatus.Text = $"Progress: {value}%";
+                                    transferProgressBar.CustomText = $"{bytesReadThisFile.ToString("N0")} bytes transferred";
+
+                                    // Force the progress bar to redraw itself with the new text
+                                    transferProgressBar.Invalidate();
+                                }
+                            });
+
+                            IProgress<int> sendFileNameAndReceiveFileProgress = progressReporter;
                             while (true)
                             {
                                 Application.DoEvents();     // let the system update the status bar.
@@ -414,6 +437,16 @@ namespace TransferUniFLEX
                                 blockSize += (byte)serialPort.ReadByte();
 
                                 bytesReadThisFile += blockSize;
+                                if (filesize > 0)
+                                {
+                                    // if a size was passed in - use the progress bar as a file transfer progress
+
+                                    int currentPercentage = (int)(((double)bytesReadThisFile / filesize) * 100);
+                                    sendFileNameAndReceiveFileProgress.Report((int)currentPercentage);
+
+                                }
+                                Application.DoEvents();     // let the system update the status bar.
+
                                 if (blockSize > 0)
                                 {
                                     byte[] blockBuffer = new byte[blockSize];
@@ -1125,7 +1158,7 @@ namespace TransferUniFLEX
             return error;
         }
 
-        private bool Transfer (string localFilename, string remoteFilename, bool uniFLEXFilenameIsDirectory, bool isDirectoryTransfer = false)
+        private bool Transfer (string localFilename, string remoteFilename, bool uniFLEXFilenameIsDirectory, bool isDirectoryTransfer = false, int size = 0)
         {
             statusLabel = new ToolStripStatusLabel();
             statusLabel.Text = "Idle";
@@ -1178,14 +1211,14 @@ namespace TransferUniFLEX
                             // filename (just the filename) combined with the local directory selected
 
                             if (textBoxLocalFileName.Text.Length > 0)
-                                fileToGet = textBoxLocalFileName.Text;
+                                fileToGet = textBoxLocalFileName.Text.Replace(@"\", "/");
                         }
 
-                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0);
+                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, fileToGet.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), 0, size);
                     }
                     else
                     {
-                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), 0);
+                        error = SendFileNameAndRecieveFile(Program.remoteAccess.serialPort, localFilename.Replace(@"\", "/"), remoteFilename.Replace(@"\", "/"), 0, size);
                     }
                 }
             }
@@ -1659,7 +1692,7 @@ namespace TransferUniFLEX
                             if (proceed)
                             {
                                 bytesTransferred = 0;
-                                IProgress<int> progress = progressReporter;
+                                IProgress<int> multiFileSendTransferProgress = progressReporter;
 
                                 string[] filenames = Directory.GetFiles(textBoxLocalDirName.Text, "*", checkBoxRecursive.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                                 foreach (string filename in filenames)
@@ -1682,9 +1715,9 @@ namespace TransferUniFLEX
                                     {
                                         filesTransferred++;
                                         bytesTransferred += bytesReadThisFile;
-                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
 
-                                        progress.Report((int)currentPercentage);
+                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+                                        multiFileSendTransferProgress.Report((int)currentPercentage);
 
                                         if (stop)
                                         {
@@ -1740,7 +1773,7 @@ namespace TransferUniFLEX
                             if (proceed)
                             {
                                 bytesTransferred = 0;
-                                IProgress<int> progress = progressReporter;
+                                IProgress<int> singleOrMultiFileTransferProgress = progressReporter;
 
                                 foreach (string filename in filenames)
                                 {
@@ -1762,9 +1795,9 @@ namespace TransferUniFLEX
                                     {
                                         filesTransferred++;
                                         bytesTransferred += bytesReadThisFile;
-                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
 
-                                        progress.Report((int)currentPercentage);
+                                        int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+                                        singleOrMultiFileTransferProgress.Report((int)currentPercentage);
 
                                         if (stop)
                                         {
@@ -1818,7 +1851,7 @@ namespace TransferUniFLEX
                         // we are going to request multiple files specified in the selectedFileInfos list
 
                         bytesTransferred = 0;
-                        IProgress<int> progress = progressReporter;
+                        IProgress<int> multiFileReceiveTransferProgress = progressReporter;
 
                         foreach (KeyValuePair<string, FileInformation> fileInfo in selectedFileInfos)
                         {
@@ -1841,9 +1874,9 @@ namespace TransferUniFLEX
                                 filesTransferred++;
 
                                 bytesTransferred += bytesReadThisFile;
-                                int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
 
-                                progress.Report((int)currentPercentage);
+                                int currentPercentage = (int)(((double)bytesTransferred / totalBytesToTransfer) * 100);
+                                multiFileReceiveTransferProgress.Report((int)currentPercentage);
 
                                 if (!success)
                                     break;
@@ -1900,12 +1933,12 @@ namespace TransferUniFLEX
                             {
                                 // if the local file name text box is empty - build a filename from the local directory text box and the file name
                                 string filenameToSave = Path.Combine(textBoxLocalDirName.Text, fileInfo.Key);
-                                success = Transfer(filenameToSave.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                                success = Transfer(filenameToSave.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false, fileInfo.Value.stat.st_size);
                                 filesTransferred++;
                             }
                             else
                             {
-                                success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false);
+                                success = Transfer(textBoxLocalFileName.Text.Replace(@"\", "/"), textBoxUniFLEXFileName.Text.Replace(@"\", "/"), false, false, fileInfo.Value.stat.st_size);
                                 filesTransferred++;
                             }
                         }
