@@ -33,9 +33,18 @@ namespace TransferUniFLEX
         public DateTime UNIXtoDateTime(long seconds)
         {
             double secs = Convert.ToDouble(seconds);
+
+            // UniFLEX uses time starting on Jan 1st 1980 and is GMT.
             DateTime dt = new DateTime(1980, 1, 1, 0, 0, 0).AddSeconds(secs);
 
-            return System.TimeZone.CurrentTimeZone.ToLocalTime(dt);
+            // minix uses time starting on Jan 1st 1970 and is already local time
+            if (Program.isMinix)
+            {
+                dt = new DateTime(1970, 1, 1, 0, 0, 0).AddSeconds(secs);
+                return dt;
+            }
+            else
+                return System.TimeZone.CurrentTimeZone.ToLocalTime(dt);
         }
 
         public string ConvertDateTime(int fileTime)
@@ -48,9 +57,6 @@ namespace TransferUniFLEX
             int hour   = t.Hour;
             int minute = t.Minute;
             int second = t.Second;
-
-            if (Program.isMinix)
-                year -= 10;
 
             //if (year < 100)
             //    year += 1900;
